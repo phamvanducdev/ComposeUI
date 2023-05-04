@@ -1,0 +1,10 @@
+<resources>
+    <!-- TopAppBar Menu-->
+    <string name="terms_of_service">Terms of service</string>
+    <string name="privacy_policy">Privacy policy</string>
+    <string name="open_source_licenses">Open source licenses</string>
+
+    <string name="catalog">Catalog</string>
+    <string name="component">Component</string>
+    <string name="mini_app">MiniApp</string>
+</resources>

@@ -1,0 +1,105 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
+    id 'dagger.hilt.android.plugin'
+}
+
+android {
+    apply from: '../config/signature/debug.gradle', to: android
+    apply from: '../config/signature/release.gradle', to: android
+
+    namespace 'com.ducpv.demo'
+
+    compileSdkVersion buildConfig.compileSdk
+
+    defaultConfig {
+        applicationId "com.ducpv.demo"
+        minSdkVersion buildConfig.minSdk
+        targetSdkVersion buildConfig.targetSdk
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary true
+        }
+    }
+    buildTypes {
+        debug {
+            minifyEnabled false
+            debuggable true
+            signingConfig signingConfigs.debug
+        }
+        release {
+            minifyEnabled true
+            debuggable false
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    flavorDimensions "environment"
+    productFlavors {
+        def envProperties = new Properties()
+        envProperties.load(rootProject.file('config/properties/env.properties').newDataInputStream())
+        develop {
+            dimension "environment"
+            applicationIdSuffix '.dev'
+            buildConfigField("String", "API_URL", "\"${envProperties.getProperty("API_URL_DEV")}\"")
+            resValue "string", "app_name", "CUi[Dev]"
+        }
+        production {
+            dimension "environment"
+            buildConfigField("String", "API_URL", "\"${envProperties.getProperty("API_URL_PRODUCTION")}\"")
+            resValue "string", "app_name", "CUi"
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+    }
+    buildFeatures {
+        compose true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion composeCompilerVersion
+        kotlinCompilerVersion kotlinVersion
+    }
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+}
+
+dependencies {
+    implementation coreKtx
+    implementation appCompat
+    implementation composeUi
+    implementation composeMaterial
+    implementation composeMaterialIcon
+    implementation composePreview
+    implementation composeActivity
+    implementation composeNavigationAnimation
+    implementation composeCoil
+
+    implementation composeRuntimeLivedata
+    implementation androidLifecycleRuntimeKtx
+
+    implementation splashScreen
+    implementation timber
+
+    implementation daggaerHilt
+    kapt daggaerHiltCompiler
+    implementation daggaerHiltNavigationCompose
+
+    testImplementation junit
+    androidTestImplementation junitExt
+    androidTestImplementation espresso
+    androidTestImplementation composeUiTest
+    debugImplementation composeUiTooling
+    debugImplementation composeUiTestManifest
+}
