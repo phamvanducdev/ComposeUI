@@ -1,0 +1,76 @@
+name: Run Deploy Develop App
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  setup:
+    name: Setup Env
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+
+      - name: Setup Android SDK Tools
+        uses: android-actions/setup-android@v2
+
+  ktLint:
+    name: Run KtLint Check Code
+    needs: [ setup ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: true
+
+      - name: Run KtLint
+        run: ./gradlew ktLint
+
+  unitTest:
+    name: Run Unit Test
+    needs: [ setup ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: true
+
+      - name: Run unit test
+        run: ./gradlew testDevelopDebugUnitTest
+
+  build-and-deploy-develop-app:
+    name: Build & Deploy Develop App
+    needs: [ setup, ktLint, unitTest ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: true
+
+      - name: Generate Develop APK
+        run: ./gradlew assembleDevelopDebug
+
+      - name: Upload APK on Build Artifacts
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_DEV_APP_ID }}
+          token: ${{ secrets.FIREBASE_DEV_TOKEN }}
+          file: app/build/outputs/apk/debug/app-develop-debug.apk

@@ -3,6 +3,7 @@ buildscript {
     dependencies {
         classpath daggaerHiltGradlePlugin
         classpath kotlinxSerialization
+        classpath googleServicesPlugin
     }
 }
 

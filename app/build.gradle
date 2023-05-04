@@ -1,20 +1,21 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-    id 'kotlin-kapt'
+    id 'com.google.gms.google-services'
     id 'dagger.hilt.android.plugin'
+    id 'kotlin-kapt'
 }
 
 android {
     apply from: '../config/signature/debug.gradle', to: android
     apply from: '../config/signature/release.gradle', to: android
 
-    namespace 'com.ducpv.demo'
+    namespace 'com.ducpv.composeui'
 
     compileSdkVersion buildConfig.compileSdk
 
     defaultConfig {
-        applicationId "com.ducpv.demo"
+        applicationId "com.ducpv.composeui"
         minSdkVersion buildConfig.minSdk
         targetSdkVersion buildConfig.targetSdk
         versionCode 1
@@ -96,10 +97,20 @@ dependencies {
     kapt daggaerHiltCompiler
     implementation daggaerHiltNavigationCompose
 
+    implementation platform(firebaseBom)
+    implementation firebaseAnalyticsKtx
+    implementation firebaseFirestoreKtx
+
     testImplementation junit
     androidTestImplementation junitExt
     androidTestImplementation espresso
     androidTestImplementation composeUiTest
     debugImplementation composeUiTooling
     debugImplementation composeUiTestManifest
+}
+
+apply from: './ktlint.gradle'
+
+kapt {
+    correctErrorTypes true
 }

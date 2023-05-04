@@ -3,6 +3,8 @@ buildscript {
     versions.compose = '1.4.1'
     versions.accompanist = '0.30.1'
     versions.hilt = '2.45'
+    versions.firebaseBom = '31.2.0'
+    versions.crashlytics = '2.9.2'
 
     ext {
         kotlinVersion = '1.8.10'
@@ -57,7 +59,10 @@ buildscript {
         composeUiTooling = "androidx.compose.ui:ui-tooling:${versions.compose}"
         composeUiTestManifest = "androidx.compose.ui:ui-test-manifest:${versions.compose}"
 
-        firebasePlugin = 'com.google.gms:google-services:4.3.15'
-        firestore = 'com.google.firebase:firebase-firestore-ktx:24.4.3'
+        googleServicesPlugin = 'com.google.gms:google-services:4.3.15'
+
+        firebaseBom = "com.google.firebase:firebase-bom:${versions.firebaseBom}"
+        firebaseFirestoreKtx = "com.google.firebase:firebase-firestore-ktx"
+        firebaseAnalyticsKtx = "com.google.firebase:firebase-analytics-ktx"
     }
 }

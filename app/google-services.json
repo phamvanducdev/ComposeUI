@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "182294622853",
+    "project_id": "ducpv-compose",
+    "storage_bucket": "ducpv-compose.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:182294622853:android:76fa5abcf11eb2d9426fec",
+        "android_client_info": {
+          "package_name": "com.ducpv.composeui.dev"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "182294622853-ae2iq67lpkm0nl98bnu2pfhv4qejoeop.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRoZFxENKB9nCqPVmXovKwkGmSWiknhzY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "182294622853-ae2iq67lpkm0nl98bnu2pfhv4qejoeop.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
