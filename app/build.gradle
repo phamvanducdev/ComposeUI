@@ -6,6 +6,8 @@ plugins {
     id 'kotlin-kapt'
 }
 
+apply from: '../gradle/ktlint.gradle'
+
 android {
     apply from: '../config/signature/debug.gradle', to: android
     apply from: '../config/signature/release.gradle', to: android
@@ -19,7 +21,7 @@ android {
         minSdkVersion buildConfig.minSdk
         targetSdkVersion buildConfig.targetSdk
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -108,8 +110,6 @@ dependencies {
     debugImplementation composeUiTooling
     debugImplementation composeUiTestManifest
 }
-
-apply from: './ktlint.gradle'
 
 kapt {
     correctErrorTypes true

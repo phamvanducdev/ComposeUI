@@ -1,4 +1,4 @@
-name: Run Deploy Develop App
+name: Run Deploy Develop Debug App
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -6,7 +6,7 @@ concurrency:
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [ develop ]
 
 jobs:
   setup:
@@ -54,7 +54,7 @@ jobs:
         run: ./gradlew testDevelopDebugUnitTest
 
   build-and-deploy-develop-app:
-    name: Build & Deploy Develop App
+    name: Build & Deploy Develop Debug App
     needs: [ setup, ktLint, unitTest ]
     runs-on: ubuntu-latest
     steps:
@@ -72,5 +72,7 @@ jobs:
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_DEV_APP_ID }}
-          token: ${{ secrets.FIREBASE_DEV_TOKEN }}
-          file: app/build/outputs/apk/debug/app-develop-debug.apk
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIALS }}
+          file: app/build/outputs/apk/develop/debug/app-develop-debug.apk
+          releaseNotes: ${{ github.event.pull_request.title }}
+          groups: appTester
