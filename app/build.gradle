@@ -1,24 +1,27 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-    id 'kotlin-kapt'
+    id 'com.google.gms.google-services'
     id 'dagger.hilt.android.plugin'
+    id 'kotlin-kapt'
 }
+
+apply from: '../gradle/ktlint.gradle'
 
 android {
     apply from: '../config/signature/debug.gradle', to: android
     apply from: '../config/signature/release.gradle', to: android
 
-    namespace 'com.ducpv.demo'
+    namespace 'com.ducpv.composeui'
 
     compileSdkVersion buildConfig.compileSdk
 
     defaultConfig {
-        applicationId "com.ducpv.demo"
+        applicationId "com.ducpv.composeui"
         minSdkVersion buildConfig.minSdk
         targetSdkVersion buildConfig.targetSdk
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -96,10 +99,18 @@ dependencies {
     kapt daggaerHiltCompiler
     implementation daggaerHiltNavigationCompose
 
+    implementation platform(firebaseBom)
+    implementation firebaseAnalyticsKtx
+    implementation firebaseFirestoreKtx
+
     testImplementation junit
     androidTestImplementation junitExt
     androidTestImplementation espresso
     androidTestImplementation composeUiTest
     debugImplementation composeUiTooling
     debugImplementation composeUiTestManifest
+}
+
+kapt {
+    correctErrorTypes true
 }
