@@ -23,6 +23,7 @@ fun MiniAppListScreen(
         NavDestinations.AnalogClock,
         NavDestinations.TicTacToe,
         NavDestinations.SwitchButton,
+        NavDestinations.GoogleMap,
     )
     LazyColumn(
         modifier = Modifier.fillMaxSize(),

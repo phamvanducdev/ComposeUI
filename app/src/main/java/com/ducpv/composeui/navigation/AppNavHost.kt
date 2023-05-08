@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import com.ducpv.composeui.feature.component.ComponentListScreen
 import com.ducpv.composeui.feature.miniapp.MiniAppListScreen
 import com.ducpv.composeui.feature.miniapp.clock.AnalogClockScreen
+import com.ducpv.composeui.feature.miniapp.googlemaps.GoogleMapsScreen
 import com.ducpv.composeui.feature.miniapp.switchbutton.SwitchButtonScreen
 import com.ducpv.composeui.feature.miniapp.tictactoe.TicTacToeScreen
 import com.google.accompanist.navigation.animation.AnimatedNavHost
@@ -38,6 +39,9 @@ fun AppNavHost(appState: AppState) {
             composable(NavDestinations.SwitchButton.route) {
                 SwitchButtonScreen(appState = appState)
             }
+            composable(NavDestinations.GoogleMap.route) {
+                GoogleMapsScreen(appState = appState)
+            }
         }
         navigation(
             route = TopLevelDestination.Component.graphRoute,
@@ -56,7 +60,8 @@ enum class NavDestinations(val route: String, val label: String) {
     MiniAppList("mini_app_route", "MiniApp"),
     SwitchButton("switch_button", "SwitchButton"),
     AnalogClock("analog_clock_route", "AnalogClock"),
-    TicTacToe("tic_tac_toe_route", "TicTacToe");
+    TicTacToe("tic_tac_toe_route", "TicTacToe"),
+    GoogleMap("google_map_route", "GoogleMap");
 
     companion object {
         fun findByRoute(route: String?): NavDestinations? {

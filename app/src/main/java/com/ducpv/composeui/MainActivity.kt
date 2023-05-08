@@ -54,6 +54,7 @@ fun ComposeUiApp(
     ModalNavigationDrawer(
         modifier = Modifier.fillMaxSize(),
         drawerState = appState.drawerState,
+        gesturesEnabled = appState.drawerGesturesEnabled,
         drawerContent = {
             AppDrawer(
                 destinations = appState.topLevelDestinations,

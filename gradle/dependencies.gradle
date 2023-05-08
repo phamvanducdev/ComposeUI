@@ -11,9 +11,9 @@ buildscript {
         composeCompilerVersion = '1.4.4'
 
         buildConfig = [
-                "compileSdk": 33,
-                "minSdk"    : 29,
-                "targetSdk" : 32
+            "compileSdk": 33,
+            "minSdk"    : 29,
+            "targetSdk" : 32
         ]
 
         coreKtx = 'androidx.core:core-ktx:1.9.0'
@@ -64,5 +64,8 @@ buildscript {
         firebaseBom = "com.google.firebase:firebase-bom:${versions.firebaseBom}"
         firebaseFirestoreKtx = "com.google.firebase:firebase-firestore-ktx"
         firebaseAnalyticsKtx = "com.google.firebase:firebase-analytics-ktx"
+
+        mapsPlayServices = "com.google.android.gms:play-services-maps:18.1.0"
+        mapsCompose = "com.google.maps.android:maps-compose:2.11.4"
     }
 }

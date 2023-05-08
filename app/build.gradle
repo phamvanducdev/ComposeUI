@@ -103,6 +103,9 @@ dependencies {
     implementation firebaseAnalyticsKtx
     implementation firebaseFirestoreKtx
 
+    implementation mapsCompose
+    implementation mapsPlayServices
+
     testImplementation junit
     androidTestImplementation junitExt
     androidTestImplementation espresso

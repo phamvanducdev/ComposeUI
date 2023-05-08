@@ -4,9 +4,7 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -28,6 +26,14 @@ class AppState(
     val coroutineScope: CoroutineScope,
     val snackHostState: SnackbarHostState
 ) {
+    init {
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            drawerGesturesEnabled = destination.route in TopLevelDestination.values().map { it.route }
+        }
+    }
+
+    var drawerGesturesEnabled by mutableStateOf(true)
+
     val topLevelDestinations = TopLevelDestination.values().asList()
 
     val currentDestination: NavDestination?
