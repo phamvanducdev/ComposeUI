@@ -1,4 +1,4 @@
-package com.ducpv.composeui.feature.miniapp.clock
+package com.ducpv.composeui.feature.analogclock
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box

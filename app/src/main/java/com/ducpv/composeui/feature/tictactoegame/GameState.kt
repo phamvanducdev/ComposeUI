@@ -1,4 +1,4 @@
-package com.ducpv.composeui.feature.miniapp.tictactoe
+package com.ducpv.composeui.feature.tictactoegame
 
 /**
  * Created by pvduc9773 on 30/03/2023.

@@ -54,6 +54,7 @@ fun ComposeUiApp(
     ModalNavigationDrawer(
         modifier = Modifier.fillMaxSize(),
         drawerState = appState.drawerState,
+        gesturesEnabled = appState.drawerGesturesEnabled,
         drawerContent = {
             AppDrawer(
                 destinations = appState.topLevelDestinations,
@@ -67,6 +68,7 @@ fun ComposeUiApp(
             navigationIcon = appState.navigationIcon,
             snackHostState = appState.snackHostState,
             onNavigationClick = appState::onNavigationClick,
+            onOpenSourceClick = appState::onOpenSourceClick,
         ) { paddingValues ->
             Box(modifier = Modifier.padding(paddingValues)) {
                 AppNavHost(appState = appState)

@@ -1,4 +1,4 @@
-package com.ducpv.composeui.feature.miniapp.switchbutton
+package com.ducpv.composeui.feature.switchlocker
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -81,7 +81,7 @@ enum class ButtonState {
 }
 
 @Composable
-fun SwitchButtonScreen(appState: AppState) {
+fun SwitchLockerScreen(appState: AppState) {
     var buttonState by remember { mutableStateOf(ButtonState.UNLOCKED) }
     Column(
         modifier = Modifier

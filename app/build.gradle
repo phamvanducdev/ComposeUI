@@ -103,6 +103,13 @@ dependencies {
     implementation firebaseAnalyticsKtx
     implementation firebaseFirestoreKtx
 
+    implementation mapsCompose
+    implementation mapsPlayServices
+
+    implementation roomKtx
+    implementation roomRuntime
+    kapt roomCompiler
+
     testImplementation junit
     androidTestImplementation junitExt
     androidTestImplementation espresso
