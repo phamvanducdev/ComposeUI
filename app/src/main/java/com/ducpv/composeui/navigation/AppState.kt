@@ -1,5 +1,7 @@
 package com.ducpv.composeui.navigation
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -28,7 +30,9 @@ class AppState(
 ) {
     init {
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            drawerGesturesEnabled = destination.route in TopLevelDestination.values().map { it.route }
+            drawerGesturesEnabled = destination.route in
+                (TopLevelDestination.values().toList() - TopLevelDestination.RunningTracker)
+                    .map { it.startRoute }
         }
     }
 
@@ -41,10 +45,10 @@ class AppState(
 
     private val currentTopLevelDestination: TopLevelDestination?
         get() = topLevelDestinations.find {
-            it.route == navController.currentDestination?.route
+            it.startRoute == navController.currentDestination?.route
         }
 
-    val topBarTitle: String?
+    val topBarTitle: Int?
         @Composable get() = NavDestinations.findByRoute(currentDestination?.route)?.label
 
     val navigationIcon: ImageVector
@@ -64,6 +68,12 @@ class AppState(
         }
     }
 
+    fun onOpenSourceClick() {
+        val context = navController.context
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/phamvanducdev/ComposeUI"))
+        context.startActivity(intent)
+    }
+
     fun navigateToTopLevelDestination(destination: TopLevelDestination) {
         val topLevelNavOptions = navOptions {
             // Pop up to the start destination of the graph to
@@ -79,8 +89,10 @@ class AppState(
             restoreState = true
         }
         when (destination) {
-            TopLevelDestination.Component,
-            TopLevelDestination.MiniApp -> {
+            TopLevelDestination.AnalogClock,
+            TopLevelDestination.SwitchLocker,
+            TopLevelDestination.TicTacToeGame,
+            TopLevelDestination.RunningTracker -> {
                 navController.navigate(destination.graphRoute, topLevelNavOptions)
                 onChangeDrawerState()
             }
@@ -102,20 +114,32 @@ class AppState(
 enum class TopLevelDestination(
     val icon: ImageVector,
     val label: Int,
-    val route: String,
+    val startRoute: String,
     val graphRoute: String
 ) {
-    Component(
-        icon = Icons.Default.Android,
-        label = R.string.component,
-        route = NavDestinations.ComponentList.route,
-        graphRoute = "component_graph",
+    AnalogClock(
+        icon = Icons.Default.LockClock,
+        label = R.string.analog_clock,
+        startRoute = NavDestinations.AnalogClock.route,
+        graphRoute = "analog_clock_graph",
     ),
-    MiniApp(
-        icon = Icons.Default.VideogameAsset,
-        label = R.string.mini_app,
-        route = NavDestinations.MiniAppList.route,
-        graphRoute = "mini_app_graph",
+    SwitchLocker(
+        icon = Icons.Default.SmartButton,
+        label = R.string.switch_locker,
+        startRoute = NavDestinations.SwitchLocker.route,
+        graphRoute = "switch_locker_graph",
+    ),
+    TicTacToeGame(
+        icon = Icons.Default.CropSquare,
+        label = R.string.tic_tac_toe_game,
+        startRoute = NavDestinations.TicTacToeGame.route,
+        graphRoute = "tic_tac_toe_game_graph",
+    ),
+    RunningTracker(
+        icon = Icons.Default.DirectionsRun,
+        label = R.string.running_tracker,
+        startRoute = NavDestinations.RunningTracker.route,
+        graphRoute = "running_route_graph",
     )
 }
 

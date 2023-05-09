@@ -1,4 +1,4 @@
-package com.ducpv.composeui.feature.miniapp.googlemaps
+package com.ducpv.composeui.feature.runningtracker
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -12,7 +12,7 @@ import com.google.maps.android.compose.*
  * Created by pvduc9773 on 08/05/2023.
  */
 @Composable
-fun GoogleMapsScreen(appState: AppState) {
+fun RunningTrackerScreen(appState: AppState) {
     val singapore = LatLng(1.35, 103.87)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(singapore, 10f)

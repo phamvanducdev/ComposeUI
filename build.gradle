@@ -2,8 +2,8 @@ buildscript {
     apply from: 'gradle/dependencies.gradle'
     dependencies {
         classpath daggaerHiltGradlePlugin
-        classpath googleServicesPlugin
         classpath kotlinxSerialization
+        classpath googleServicesPlugin
     }
 }
 

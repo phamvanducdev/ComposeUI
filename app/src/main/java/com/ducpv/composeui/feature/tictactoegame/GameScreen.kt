@@ -1,4 +1,4 @@
-package com.ducpv.composeui.feature.miniapp.tictactoe
+package com.ducpv.composeui.feature.tictactoegame
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -16,14 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ducpv.composeui.navigation.AppState
 import com.ducpv.composeui.shared.theme.ThemeColor
+import com.ducpv.composeui.shared.theme.alpha10
 import com.ducpv.composeui.shared.theme.color
 
 /**
@@ -31,7 +28,7 @@ import com.ducpv.composeui.shared.theme.color
  */
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun TicTacToeScreen(
+fun TicTacToeGameScreen(
     appState: AppState,
     viewModel: GameViewModel = hiltViewModel()
 ) {
@@ -129,15 +126,16 @@ fun TicTacToeScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            Button(
+                colors = ButtonDefaults.buttonColors(
+                    contentColor = ThemeColor.White.color,
+                    containerColor = ThemeColor.Blue.color.alpha10,
+                ),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                onClick = {},
             ) {
                 Text(
-                    text = "Current turn:",
-                    fontSize = 24.sp,
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Normal,
-                    fontFamily = FontFamily.Cursive,
+                    text = "Current turn ->",
                     color = ThemeColor.Blue.color,
                 )
                 AnimatedContent(targetState = currentTurn) { currentTurn ->

@@ -1,4 +1,4 @@
-package com.ducpv.composeui.feature.miniapp.tictactoe
+package com.ducpv.composeui.feature.tictactoegame
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*

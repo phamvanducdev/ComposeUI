@@ -17,10 +17,11 @@ import com.ducpv.composeui.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopAppBar(
-    title: String?,
+    title: Int? = null,
     navigationIcon: ImageVector? = null,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     onNavigationClick: () -> Unit = {},
+    onOpenSourceClick: () -> Unit = {},
 ) {
     var moreMenuExpanded by remember { mutableStateOf(false) }
 
@@ -28,9 +29,9 @@ fun TopAppBar(
         title = {
             if (title != null) {
                 Text(
-                    text = title,
-                    maxLines = 1,
+                    text = stringResource(id = title),
                     overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
                 )
             }
         },
@@ -49,13 +50,8 @@ fun TopAppBar(
                     onDismissRequest = {
                         moreMenuExpanded = false
                     },
-                    onTermsClick = {
-                        moreMenuExpanded = false
-                    },
-                    onPrivacyClick = {
-                        moreMenuExpanded = false
-                    },
-                    onLicensesClick = {
+                    onClick = {
+                        onOpenSourceClick.invoke()
                         moreMenuExpanded = false
                     },
                 )
@@ -79,22 +75,14 @@ fun TopAppBar(
 private fun MoreMenu(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
-    onTermsClick: () -> Unit = {},
-    onPrivacyClick: () -> Unit = {},
-    onLicensesClick: () -> Unit = {},
+    onClick: () -> Unit = {},
 ) {
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
     ) {
-        DropdownMenuItem(onClick = onTermsClick, text = {
-            Text(stringResource(id = R.string.terms_of_service))
-        })
-        DropdownMenuItem(onClick = onPrivacyClick, text = {
-            Text(stringResource(id = R.string.privacy_policy))
-        })
-        DropdownMenuItem(onClick = onLicensesClick, text = {
-            Text(stringResource(id = R.string.open_source_licenses))
+        DropdownMenuItem(onClick = onClick, text = {
+            Text(stringResource(R.string.open_source))
         })
     }
 }
