@@ -1,4 +1,4 @@
-package com.ducpv.composeui.feature.miniapp.tictactoe
+package com.ducpv.composeui.feature.tictactoegame
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

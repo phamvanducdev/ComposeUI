@@ -1,10 +1,9 @@
 <resources>
-    <!-- TopAppBar Menu-->
-    <string name="terms_of_service">Terms of service</string>
-    <string name="privacy_policy">Privacy policy</string>
-    <string name="open_source_licenses">Open source licenses</string>
+    <string name="google_maps_api_key">AIzaSyB6jhvzvb2DN6y0OhUU8TGUcOgglrFH3I0</string>
 
-    <string name="catalog">Catalog</string>
-    <string name="component">Component</string>
-    <string name="mini_app">MiniApp</string>
+    <string name="open_source">Open Source</string>
+    <string name="analog_clock">Analog Clock</string>
+    <string name="switch_locker">Switch Locker</string>
+    <string name="tic_tac_toe_game">TicTacToe Game</string>
+    <string name="run_tracker">Run Tracker</string>
 </resources>

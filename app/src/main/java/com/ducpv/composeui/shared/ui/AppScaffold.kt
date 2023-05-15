@@ -13,10 +13,11 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppScaffold(
-    topBarTitle: String?,
+    topBarTitle: Int? = null,
     navigationIcon: ImageVector? = null,
     snackHostState: SnackbarHostState,
     onNavigationClick: () -> Unit = {},
+    onOpenSourceClick: () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -27,6 +28,7 @@ fun AppScaffold(
                 navigationIcon = navigationIcon,
                 scrollBehavior = scrollBehavior,
                 onNavigationClick = onNavigationClick,
+                onOpenSourceClick = onOpenSourceClick,
             )
         },
         snackbarHost = { SnackbarHost(snackHostState) },

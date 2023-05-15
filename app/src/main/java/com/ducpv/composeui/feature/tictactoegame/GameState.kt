@@ -1,4 +1,4 @@
-package com.ducpv.composeui.feature.miniapp.tictactoe
+package com.ducpv.composeui.feature.tictactoegame
 
 /**
  * Created by pvduc9773 on 30/03/2023.
@@ -12,6 +12,13 @@ enum class BoardCellValue {
     CIRCLE,
     CROSS,
     NONE;
+
+    val title: String
+        get() = when (this) {
+            CIRCLE -> "Circle"
+            CROSS -> "Cross"
+            NONE -> "N/A"
+        }
 
     val nextTurn: BoardCellValue
         get() = when (this) {

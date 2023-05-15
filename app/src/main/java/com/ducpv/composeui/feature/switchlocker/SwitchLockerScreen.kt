@@ -1,4 +1,4 @@
-package com.ducpv.composeui.feature.miniapp.switchbutton
+package com.ducpv.composeui.feature.switchlocker
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ducpv.composeui.R
-import com.ducpv.composeui.navigation.AppState
 
 /**
  * Created by pvduc9773 on 28/04/2023.
@@ -63,11 +62,11 @@ enum class ButtonState {
 
     val title: String
         get() = when (this) {
-            NONE -> "スキャンする"
-            RETRY -> "もう一度さがす"
-            SCANNING -> "Bluetooth接続中..."
-            LOCKED -> "閉まっています"
-            UNLOCKED -> "開いています"
+            NONE -> "To Scan"
+            RETRY -> "Retry"
+            SCANNING -> "Connecting..."
+            LOCKED -> "Closed"
+            UNLOCKED -> "Opened"
         }
 
     val titleColor: Color
@@ -81,7 +80,7 @@ enum class ButtonState {
 }
 
 @Composable
-fun SwitchButtonScreen(appState: AppState) {
+fun SwitchLockerScreen() {
     var buttonState by remember { mutableStateOf(ButtonState.UNLOCKED) }
     Column(
         modifier = Modifier
@@ -99,35 +98,35 @@ fun SwitchButtonScreen(appState: AppState) {
         Spacer(modifier = Modifier.height(32.dp))
         CheckBox(
             checked = buttonState == ButtonState.NONE,
-            description = ButtonState.NONE.name,
+            description = ButtonState.NONE.title,
             onCheckedChange = {
                 buttonState = ButtonState.NONE
             },
         )
         CheckBox(
             checked = buttonState == ButtonState.RETRY,
-            description = ButtonState.RETRY.name,
+            description = ButtonState.RETRY.title,
             onCheckedChange = {
                 buttonState = ButtonState.RETRY
             },
         )
         CheckBox(
             checked = buttonState == ButtonState.SCANNING,
-            description = ButtonState.SCANNING.name,
+            description = ButtonState.SCANNING.title,
             onCheckedChange = {
                 buttonState = ButtonState.SCANNING
             },
         )
         CheckBox(
             checked = buttonState == ButtonState.LOCKED,
-            description = ButtonState.LOCKED.name,
+            description = ButtonState.LOCKED.title,
             onCheckedChange = {
                 buttonState = ButtonState.LOCKED
             },
         )
         CheckBox(
             checked = buttonState == ButtonState.UNLOCKED,
-            description = ButtonState.UNLOCKED.name,
+            description = ButtonState.UNLOCKED.title,
             onCheckedChange = {
                 buttonState = ButtonState.UNLOCKED
             },
@@ -244,7 +243,11 @@ fun SwitchButtonView(
                 )
                 .shapeBackground(color = animatedToggleColor)
                 .clickable {
-                    val newState = (ButtonState.values().toList() - state).random()
+                    val newState = (
+                        ButtonState
+                            .values()
+                            .toList() - state
+                        ).random()
                     onChange?.invoke(newState)
                 },
         ) {
