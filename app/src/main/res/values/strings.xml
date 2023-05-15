@@ -5,5 +5,5 @@
     <string name="analog_clock">Analog Clock</string>
     <string name="switch_locker">Switch Locker</string>
     <string name="tic_tac_toe_game">TicTacToe Game</string>
-    <string name="running_tracker">Running Tracker</string>
+    <string name="run_tracker">Run Tracker</string>
 </resources>

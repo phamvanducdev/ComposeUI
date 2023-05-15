@@ -5,7 +5,7 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.Composable
 import com.ducpv.composeui.R
 import com.ducpv.composeui.feature.analogclock.AnalogClockScreen
-import com.ducpv.composeui.feature.runningtracker.RunningTrackerScreen
+import com.ducpv.composeui.feature.runtracker.RunTrackerScreen
 import com.ducpv.composeui.feature.switchlocker.SwitchLockerScreen
 import com.ducpv.composeui.feature.tictactoegame.TicTacToeGameScreen
 import com.google.accompanist.navigation.animation.AnimatedNavHost
@@ -28,7 +28,7 @@ fun AppNavHost(appState: AppState) {
             startDestination = NavDestinations.AnalogClock.route,
         ) {
             composable(NavDestinations.AnalogClock.route) {
-                AnalogClockScreen(appState = appState)
+                AnalogClockScreen()
             }
         }
         navigation(
@@ -36,7 +36,7 @@ fun AppNavHost(appState: AppState) {
             startDestination = NavDestinations.SwitchLocker.route,
         ) {
             composable(route = NavDestinations.SwitchLocker.route) {
-                SwitchLockerScreen(appState = appState)
+                SwitchLockerScreen()
             }
         }
         navigation(
@@ -48,11 +48,11 @@ fun AppNavHost(appState: AppState) {
             }
         }
         navigation(
-            route = TopLevelDestination.RunningTracker.graphRoute,
-            startDestination = NavDestinations.RunningTracker.route,
+            route = TopLevelDestination.RunTracker.graphRoute,
+            startDestination = NavDestinations.RunTracker.route,
         ) {
-            composable(route = NavDestinations.RunningTracker.route) {
-                RunningTrackerScreen(appState = appState)
+            composable(route = NavDestinations.RunTracker.route) {
+                RunTrackerScreen()
             }
         }
     }
@@ -62,7 +62,7 @@ enum class NavDestinations(val route: String, @StringRes val label: Int) {
     AnalogClock("analog_clock_route", R.string.analog_clock),
     SwitchLocker("switch_locker_route", R.string.switch_locker),
     TicTacToeGame("tic_tac_toe_game_route", R.string.tic_tac_toe_game),
-    RunningTracker("running_tracker_route", R.string.running_tracker);
+    RunTracker("run_tracker_route", R.string.run_tracker);
 
     companion object {
         fun findByRoute(route: String?): NavDestinations? {

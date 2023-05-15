@@ -13,6 +13,13 @@ enum class BoardCellValue {
     CROSS,
     NONE;
 
+    val title: String
+        get() = when (this) {
+            CIRCLE -> "Circle"
+            CROSS -> "Cross"
+            NONE -> "N/A"
+        }
+
     val nextTurn: BoardCellValue
         get() = when (this) {
             CIRCLE -> CROSS

@@ -31,8 +31,7 @@ class AppState(
     init {
         navController.addOnDestinationChangedListener { _, destination, _ ->
             drawerGesturesEnabled = destination.route in
-                (TopLevelDestination.values().toList() - TopLevelDestination.RunningTracker)
-                    .map { it.startRoute }
+                (TopLevelDestination.values().toList() - TopLevelDestination.RunTracker).map { it.startRoute }
         }
     }
 
@@ -92,7 +91,7 @@ class AppState(
             TopLevelDestination.AnalogClock,
             TopLevelDestination.SwitchLocker,
             TopLevelDestination.TicTacToeGame,
-            TopLevelDestination.RunningTracker -> {
+            TopLevelDestination.RunTracker -> {
                 navController.navigate(destination.graphRoute, topLevelNavOptions)
                 onChangeDrawerState()
             }
@@ -135,10 +134,10 @@ enum class TopLevelDestination(
         startRoute = NavDestinations.TicTacToeGame.route,
         graphRoute = "tic_tac_toe_game_graph",
     ),
-    RunningTracker(
+    RunTracker(
         icon = Icons.Default.DirectionsRun,
-        label = R.string.running_tracker,
-        startRoute = NavDestinations.RunningTracker.route,
+        label = R.string.run_tracker,
+        startRoute = NavDestinations.RunTracker.route,
         graphRoute = "running_route_graph",
     )
 }

@@ -86,14 +86,13 @@ dependencies {
     implementation composeMaterialIcon
     implementation composePreview
     implementation composeActivity
-    implementation composeNavigationAnimation
     implementation composeCoil
+    implementation composeNavigationAnimation
+    implementation composePermissions
 
     implementation composeRuntimeLivedata
     implementation androidLifecycleRuntimeKtx
-
-    implementation splashScreen
-    implementation timber
+    implementation androidLifecycleService
 
     implementation daggaerHilt
     kapt daggaerHiltCompiler
@@ -104,11 +103,16 @@ dependencies {
     implementation firebaseFirestoreKtx
 
     implementation mapsCompose
-    implementation mapsPlayServices
+    implementation playServicesMaps
+    implementation playServicesLocation
 
     implementation roomKtx
     implementation roomRuntime
     kapt roomCompiler
+
+    implementation splashScreen
+    implementation timber
+    implementation gson
 
     testImplementation junit
     androidTestImplementation junitExt

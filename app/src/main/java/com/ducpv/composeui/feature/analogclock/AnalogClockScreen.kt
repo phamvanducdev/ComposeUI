@@ -10,7 +10,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.ducpv.composeui.navigation.AppState
 import com.ducpv.composeui.shared.theme.ThemeColor
 import com.ducpv.composeui.shared.theme.color
 import java.util.*
@@ -22,7 +21,7 @@ import kotlinx.coroutines.delay
  * Created by pvduc9773 on 25/04/2023.
  */
 @Composable
-fun AnalogClockScreen(appState: AppState) {
+fun AnalogClockScreen() {
     var hour by remember { mutableStateOf(0) }
     var minute by remember { mutableStateOf(0) }
     var second by remember { mutableStateOf(0) }
