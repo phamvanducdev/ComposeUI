@@ -25,12 +25,15 @@ buildscript {
         composeMaterialIcon = 'androidx.compose.material:material-icons-extended:1.4.0'
         composeNavigation = 'androidx.navigation:navigation-compose:2.5.3'
         composeActivity = 'androidx.activity:activity-compose:1.3.1'
-
-        composeNavigationAnimation = "com.google.accompanist:accompanist-navigation-animation:${versions.accompanist}"
         composeCoil = 'io.coil-kt:coil-compose:2.2.2'
+        composeNavigationAnimation = "com.google.accompanist:accompanist-navigation-animation:${versions.accompanist}"
+        composePermissions = "com.google.accompanist:accompanist-permissions:${versions.accompanist}"
 
         composeRuntimeLivedata = "androidx.compose.runtime:runtime-livedata:${versions.compose}"
         androidLifecycleRuntimeKtx = 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
+        androidLifecycleService = 'androidx.lifecycle:lifecycle-service:2.6.1'
+
+        splashScreen = 'androidx.core:core-splashscreen:1.0.0'
 
         daggaerHilt = "com.google.dagger:hilt-android:${versions.hilt}"
         daggaerHiltCompiler = "com.google.dagger:hilt-compiler:${versions.hilt}"
@@ -48,8 +51,8 @@ buildscript {
         okHttp3LoggingInterceptor = 'com.squareup.okhttp3:logging-interceptor:4.10.0'
 
         coroutine = 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9'
-        splashScreen = 'androidx.core:core-splashscreen:1.0.0'
         timber = 'com.jakewharton.timber:timber:5.0.1'
+        gson = 'com.google.code.gson:gson:2.10.1'
 
         roomKtx = "androidx.room:room-ktx:${versions.room}"
         roomRuntime = "androidx.room:room-runtime:${versions.room}"
@@ -60,7 +63,8 @@ buildscript {
         firebaseAnalyticsKtx = 'com.google.firebase:firebase-analytics-ktx'
 
         googleServicesPlugin = 'com.google.gms:google-services:4.3.15'
-        mapsPlayServices = 'com.google.android.gms:play-services-maps:18.1.0'
+        playServicesMaps = 'com.google.android.gms:play-services-maps:18.1.0'
+        playServicesLocation = 'com.google.android.gms:play-services-location:21.0.1'
         mapsCompose = 'com.google.maps.android:maps-compose:2.11.4'
 
         junit = 'junit:junit:4.13.2'

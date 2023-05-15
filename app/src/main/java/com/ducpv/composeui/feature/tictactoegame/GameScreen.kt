@@ -39,7 +39,7 @@ fun TicTacToeGameScreen(
     if (victoryType != VictoryType.NONE) {
         val message = when (victoryType) {
             VictoryType.DRAW -> "Game draw!"
-            else -> "Player $currentTurn winner!"
+            else -> "Player ${currentTurn.title} winner!"
         }
         LaunchedEffect(Unit) {
             appState.snackHostState.showSnackbar(message)
