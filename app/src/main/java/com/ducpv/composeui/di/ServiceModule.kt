@@ -6,7 +6,6 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.ducpv.composeui.MainActivity
 import com.ducpv.composeui.R
-import com.ducpv.composeui.domain.service.RunTrackingService
 import com.ducpv.composeui.domain.service.RunTrackingService.Companion.NOTIFICATION_CHANNEL_ID
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -39,9 +38,7 @@ object ServiceModule {
     ): PendingIntent = PendingIntent.getActivity(
         context,
         0,
-        Intent(context, MainActivity::class.java).apply {
-            action = RunTrackingService.ACTION_OPEN_RUN_TRACKER
-        },
+        Intent(context, MainActivity::class.java),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 
@@ -53,7 +50,7 @@ object ServiceModule {
     ): NotificationCompat.Builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
         .setAutoCancel(false)
         .setOngoing(true)
-        .setSmallIcon(R.drawable.ic_app_logo)
+        .setSmallIcon(R.drawable.ic_logo)
         .setContentTitle(context.getString(R.string.run_tracker))
         .setContentText("00:00:00")
         .setContentIntent(mainActivityPendingIntent)

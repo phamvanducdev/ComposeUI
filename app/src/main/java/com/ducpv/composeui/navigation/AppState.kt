@@ -1,7 +1,5 @@
 package com.ducpv.composeui.navigation
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -30,8 +28,12 @@ class AppState(
 ) {
     init {
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            drawerGesturesEnabled = destination.route in
-                (TopLevelDestination.values().toList() - TopLevelDestination.RunTracker).map { it.startRoute }
+            drawerGesturesEnabled = if (multipleTopDestination) {
+                val destinations = TopLevelDestination.values().toList() - TopLevelDestination.RunTracker
+                destination.route in destinations.map { it.startRoute }
+            } else {
+                false
+            }
         }
     }
 
@@ -47,11 +49,15 @@ class AppState(
             it.startRoute == navController.currentDestination?.route
         }
 
+    private val multipleTopDestination: Boolean
+        get() = topLevelDestinations.size > 1
+
     val topBarTitle: Int?
         @Composable get() = NavDestinations.findByRoute(currentDestination?.route)?.label
 
-    val navigationIcon: ImageVector
+    val navigationIcon: ImageVector?
         get() {
+            if (topLevelDestinations.size <= 1) return null
             return if (currentTopLevelDestination != null) {
                 Icons.Default.Menu
             } else {
@@ -65,12 +71,6 @@ class AppState(
         } else {
             navController.popBackStack()
         }
-    }
-
-    fun onOpenSourceClick() {
-        val context = navController.context
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/phamvanducdev/ComposeUI"))
-        context.startActivity(intent)
     }
 
     fun navigateToTopLevelDestination(destination: TopLevelDestination) {
@@ -88,8 +88,6 @@ class AppState(
             restoreState = true
         }
         when (destination) {
-            TopLevelDestination.AnalogClock,
-            TopLevelDestination.SwitchLocker,
             TopLevelDestination.TicTacToeGame,
             TopLevelDestination.RunTracker -> {
                 navController.navigate(destination.graphRoute, topLevelNavOptions)
@@ -116,20 +114,8 @@ enum class TopLevelDestination(
     val startRoute: String,
     val graphRoute: String
 ) {
-    AnalogClock(
-        icon = Icons.Default.LockClock,
-        label = R.string.analog_clock,
-        startRoute = NavDestinations.AnalogClock.route,
-        graphRoute = "analog_clock_graph",
-    ),
-    SwitchLocker(
-        icon = Icons.Default.SmartButton,
-        label = R.string.switch_locker,
-        startRoute = NavDestinations.SwitchLocker.route,
-        graphRoute = "switch_locker_graph",
-    ),
     TicTacToeGame(
-        icon = Icons.Default.CropSquare,
+        icon = Icons.Default.Gamepad,
         label = R.string.tic_tac_toe_game,
         startRoute = NavDestinations.TicTacToeGame.route,
         graphRoute = "tic_tac_toe_game_graph",

@@ -11,16 +11,16 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.ducpv.composeui.navigation.AppState
 import com.ducpv.composeui.shared.theme.ThemeColor
-import com.ducpv.composeui.shared.theme.alpha10
 import com.ducpv.composeui.shared.theme.color
 
 /**
@@ -28,141 +28,127 @@ import com.ducpv.composeui.shared.theme.color
  */
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun TicTacToeGameScreen(
-    appState: AppState,
-    viewModel: GameViewModel = hiltViewModel()
-) {
-    val boardItems = viewModel.boardItems
-    val currentTurn = viewModel.gameState.currentTurn
-    val victoryType = viewModel.gameState.victoryType
-
-    if (victoryType != VictoryType.NONE) {
-        val message = when (victoryType) {
-            VictoryType.DRAW -> "Game draw!"
-            else -> "Player ${currentTurn.title} winner!"
-        }
-        LaunchedEffect(Unit) {
-            appState.snackHostState.showSnackbar(message)
-        }
-    }
-
+fun TicTacToeGameScreen(viewModel: GameViewModel = hiltViewModel()) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
     ) {
-        Spacer(modifier = Modifier.height(8.dp))
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1f)
-                .shadow(
-                    elevation = 10.dp,
-                    shape = RoundedCornerShape(10.dp),
-                )
-                .clip(RoundedCornerShape(10.dp))
-                .background(ThemeColor.White.color),
-            contentAlignment = Alignment.Center,
+                .padding(24.dp),
         ) {
-            BoardGame()
-            LazyVerticalGrid(
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(42.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                AnimatedVisibility(
+                    visible = viewModel.gameUiState.isGameOver,
+                    enter = fadeIn(tween(600)),
+                    exit = fadeOut(tween(0)),
+                ) {
+                    val winnerDisplayName = when (viewModel.gameUiState.victoryType) {
+                        VictoryType.DRAW -> "Game draw!"
+                        else -> "${viewModel.gameUiState.currentPlayer?.displayName} winner!"
+                    }
+                    val winnerDisplayColor = when (viewModel.gameUiState.victoryType) {
+                        VictoryType.DRAW -> ThemeColor.Pink.color
+                        else -> viewModel.gameUiState.currentPlayer?.displayColor ?: ThemeColor.Pink.color
+                    }
+                    Text(
+                        modifier = Modifier.fillMaxSize(),
+                        textAlign = TextAlign.Center,
+                        text = winnerDisplayName,
+                        color = winnerDisplayColor,
+                        fontSize = 24.sp,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .padding(20.dp),
-                columns = GridCells.Fixed(3),
+                    .shadow(
+                        elevation = 8.dp,
+                        shape = RoundedCornerShape(8.dp),
+                    )
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(ThemeColor.White.color),
+                contentAlignment = Alignment.Center,
             ) {
-                boardItems.forEach { (cellNo, _) ->
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f)
-                                .clickable(
-                                    interactionSource = MutableInteractionSource(),
-                                    indication = null,
-                                ) {
-                                    viewModel.onSelectCell(cellNo)
-                                },
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            AnimatedVisibility(
-                                visible = boardItems[cellNo] != BoardCellValue.NONE,
-                                enter = scaleIn(tween(600)),
-                                exit = scaleOut(tween(600)),
+                GameBoard()
+                LazyVerticalGrid(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                        .padding(20.dp),
+                    columns = GridCells.Fixed(3),
+                ) {
+                    viewModel.cells.forEach { (cellNo, cell) ->
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .clickable(
+                                        indication = null,
+                                        interactionSource = MutableInteractionSource(),
+                                        onClickLabel = cellNo.toString(),
+                                        onClick = { viewModel.onCellSelected(cellNo) },
+                                    ),
                             ) {
-                                when (boardItems[cellNo]) {
-                                    BoardCellValue.CIRCLE -> CircleCell()
-                                    BoardCellValue.CROSS -> CrossCell()
-                                    else -> Unit
+                                Column(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center,
+                                ) {
+                                    AnimatedVisibility(
+                                        visible = cell != Cell.NONE,
+                                        enter = scaleIn(tween(600)),
+                                        exit = scaleOut(tween(600)),
+                                    ) {
+                                        when (cell) {
+                                            Cell.CIRCLE -> CircleCell()
+                                            Cell.CROSS -> CrossCell()
+                                            else -> Unit
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                AnimatedVisibility(
-                    visible = victoryType != VictoryType.NONE,
-                    enter = fadeIn(tween(600)),
-                    exit = fadeOut(tween(600)),
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                        .padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                 ) {
-                    DrawVictoryLine(victoryType = victoryType)
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(24.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Button(
-                colors = ButtonDefaults.buttonColors(
-                    contentColor = ThemeColor.White.color,
-                    containerColor = ThemeColor.Blue.color.alpha10,
-                ),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-                onClick = {},
-            ) {
-                Text(
-                    text = "Current turn ->",
-                    color = ThemeColor.Blue.color,
-                )
-                AnimatedContent(targetState = currentTurn) { currentTurn ->
-                    when (currentTurn) {
-                        BoardCellValue.CIRCLE -> CircleCell(
-                            size = 32.dp,
-                            padding = 8.dp,
-                            stroke = 5f,
+                    AnimatedVisibility(
+                        visible = viewModel.gameUiState.isGameOver,
+                        enter = fadeIn(tween(600)),
+                        exit = fadeOut(tween(600)),
+                    ) {
+                        DrawVictoryLine(
+                            victoryType = viewModel.gameUiState.victoryType,
+                            victoryPlayer = viewModel.gameUiState.currentPlayer,
                         )
-                        BoardCellValue.CROSS -> CrossCell(
-                            size = 32.dp,
-                            padding = 8.dp,
-                            stroke = 5f,
-                        )
-                        else -> Unit
                     }
                 }
             }
-            Button(
-                colors = ButtonDefaults.buttonColors(
-                    contentColor = ThemeColor.White.color,
-                    containerColor = ThemeColor.Blue.color,
-                ),
-                onClick = { viewModel.onResetGame() },
-            ) {
-                Text(text = "Reset game!")
-            }
+            Spacer(modifier = Modifier.height(24.dp))
+            GameAction(
+                state = viewModel.gameUiState.gameState,
+                action = {
+                    viewModel.onActionClickListener()
+                },
+            )
         }
     }
 }

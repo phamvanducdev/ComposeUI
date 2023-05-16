@@ -4,8 +4,8 @@
     <style name="AppTheme" parent="android:Theme.Material.Light.NoActionBar" />
 
     <style name="AppTheme.SplashScreen" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="windowSplashScreenBackground">@android:color/white</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="windowSplashScreenAnimationDuration">1000</item>
         <item name="postSplashScreenTheme">@style/AppTheme</item>
     </style>

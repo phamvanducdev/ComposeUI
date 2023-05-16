@@ -1,13 +1,11 @@
 package com.ducpv.composeui.feature.runtracker
 
 import android.content.Context
-import android.content.Intent
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddAlert
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,7 +18,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.ducpv.composeui.domain.model.RunTracker
 import com.ducpv.composeui.domain.model.toLocation
 import com.ducpv.composeui.domain.service.RunTrackingService
-import com.ducpv.composeui.feature.switchlocker.shapeBackground
+import com.ducpv.composeui.domain.service.TrackingState
+import com.ducpv.composeui.feature.tictactoegame.shapeBackground
 import com.ducpv.composeui.shared.theme.ThemeColor
 import com.ducpv.composeui.shared.theme.color
 import com.ducpv.composeui.shared.utility.GoogleMapUtility
@@ -32,6 +31,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
+import timber.log.Timber
 
 /**
  * Created by pvduc9773 on 08/05/2023.
@@ -74,16 +74,18 @@ fun RunTrackerScreen(
     val permissionsState = rememberMultiplePermissionsState(
         permissions = PermissionUtility.runTrackingPermissions,
         onPermissionsResult = { permissionsResult ->
+            Timber.d("/// onPermissionsResult: $permissionsResult")
             if (PermissionUtility.permissionsGranted(permissionsResult)) {
-                RunTrackingService.getCurrentLocation(context)
+                RunTrackingService.onRequestCurrentLocation(context)
             }
         },
     )
 
     LaunchedEffect(Unit) {
         if (permissionsState.allPermissionsGranted) {
-            RunTrackingService.getCurrentLocation(context)
+            RunTrackingService.onRequestCurrentLocation(context)
         } else {
+            Timber.d("/// onLaunchMultiplePermissionRequest")
             permissionsState.launchMultiplePermissionRequest()
         }
     }
@@ -123,106 +125,97 @@ fun RunTrackerScreen(
             }
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .align(Alignment.TopCenter),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column {
-                Text(text = "Lat: ${currentLocation.value?.latitude ?: "N/A"}")
-                Text(text = "Lng: ${currentLocation.value?.longitude ?: "N/A"}")
-                if (runTime.value > 0) {
-                    Text(text = runTime.value.millisecondToTimeFormat())
-                }
-            }
-
-            Column {
-                Button(onClick = {
-                    context.startService(
-                        Intent(context, RunTrackingService::class.java).apply {
-                            action = when (trackingState.value) {
-                                RunTrackingService.Companion.TrackingState.NONE,
-                                RunTrackingService.Companion.TrackingState.PAUSED,
-                                RunTrackingService.Companion.TrackingState.STOPPED -> {
-                                    RunTrackingService.ACTION_START_OR_RESUME_SERVICE
-                                }
-                                RunTrackingService.Companion.TrackingState.RUNNING -> {
-                                    RunTrackingService.ACTION_PAUSE_SERVICE
-                                }
-                            }
-                        },
-                    )
-                }) {
-                    Text(
-                        text = when (trackingState.value) {
-                            RunTrackingService.Companion.TrackingState.NONE,
-                            RunTrackingService.Companion.TrackingState.STOPPED -> {
-                                "Start"
-                            }
-                            RunTrackingService.Companion.TrackingState.PAUSED -> {
-                                "Resume"
-                            }
-                            RunTrackingService.Companion.TrackingState.RUNNING -> {
-                                "Pause"
-                            }
-                        },
-                    )
-                }
-                if (trackingState.value == RunTrackingService.Companion.TrackingState.RUNNING) {
-                    Button(onClick = {
-                        context.startService(
-                            Intent(context, RunTrackingService::class.java).apply {
-                                action = RunTrackingService.ACTION_STOP_SERVICE
-                            },
-                        )
-                    }) {
-                        Text(text = "Stop")
-                    }
-                }
-            }
-        }
-
-        if (runTrackerList.value.isNotEmpty()) {
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter),
-                contentPadding = PaddingValues(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                runTrackerList.value.forEach { runTracker ->
-                    item {
-                        itemRunTracker(
-                            runTracker = runTracker,
-                            itemWidth = (screenWidthDp * 0.6).dp,
-                            itemHeight = (screenWidthDp * 0.4).dp,
-                            onItemClickListener = {
-                                // TODO
-                            },
-                        )
-                    }
-                }
-            }
-        }
-
-        if (!permissionsState.allPermissionsGranted) {
-            FloatingActionButton(
+        if (permissionsState.allPermissionsGranted) {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
-                    .align(Alignment.BottomEnd)
-                    .shapeBackground(
-                        color = ThemeColor.Blue.color,
-                    ),
-                onClick = {
-                    permissionsState.launchMultiplePermissionRequest()
-                },
+                    .align(Alignment.TopCenter),
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Row {
-                    Image(imageVector = Icons.Default.AddAlert, contentDescription = null)
-                    Text(text = "Request permission")
+                Column {
+                    Text(text = "Lat: ${currentLocation.value?.latitude ?: "N/A"}")
+                    Text(text = "Lng: ${currentLocation.value?.longitude ?: "N/A"}")
+                    if (runTime.value > 0) {
+                        Text(text = runTime.value.millisecondToTimeFormat())
+                    }
+                }
+
+                Column {
+                    Button(onClick = {
+                        when (trackingState.value) {
+                            TrackingState.NONE,
+                            TrackingState.PAUSED,
+                            TrackingState.STOPPED -> {
+                                RunTrackingService.onStartService(context)
+                            }
+                            TrackingState.RUNNING -> {
+                                RunTrackingService.onPauseService(context)
+                            }
+                        }
+                    }) {
+                        Text(text = trackingState.value.actionName)
+                    }
+                    if (trackingState.value == TrackingState.RUNNING) {
+                        Button(onClick = {
+                            RunTrackingService.onStopService(context)
+                        }) {
+                            Text(text = "Stop")
+                        }
+                    }
+                }
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter),
+        ) {
+            if (runTrackerList.value.isNotEmpty()) {
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    runTrackerList.value.forEach { runTracker ->
+                        item {
+                            ItemRunTracker(
+                                runTracker = runTracker,
+                                itemWidth = (screenWidthDp * 0.6).dp,
+                                itemHeight = (screenWidthDp * 0.4).dp,
+                                onItemClickListener = {
+                                    // TODO
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (!permissionsState.allPermissionsGranted) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    FloatingActionButton(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .shapeBackground(ThemeColor.Red.color),
+                        contentColor = ThemeColor.White.color,
+                        containerColor = ThemeColor.Red.color,
+                        onClick = {
+                            permissionsState.launchMultiplePermissionRequest()
+                        },
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                        ) {
+                            Icon(imageVector = Icons.Default.LocationOn, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "Request permissions")
+                        }
+                    }
                 }
             }
         }
@@ -231,7 +224,7 @@ fun RunTrackerScreen(
 
 @ExperimentalMaterial3Api
 @Composable
-fun itemRunTracker(
+fun ItemRunTracker(
     runTracker: RunTracker,
     itemWidth: Dp,
     itemHeight: Dp,

@@ -18,4 +18,7 @@ interface RunTrackerDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertRunTracker(entity: RunTrackerEntity)
+
+    @Query(value = "DELETE FROM run_tracker")
+    suspend fun clear()
 }
