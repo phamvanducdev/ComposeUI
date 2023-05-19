@@ -24,9 +24,8 @@ object PermissionUtility {
     }
 
     fun permissionsGranted(permissions: Map<String, Boolean>): Boolean {
-        if (permissions.isEmpty()) return false
         for (permission in permissions) {
-            if (permission.value) return false
+            if (!permission.value) return false
         }
         return true
     }

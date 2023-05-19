@@ -29,14 +29,58 @@ import timber.log.Timber
 /**
  * Created by pvduc9773 on 09/05/2023.
  */
+enum class TrackingState {
+    NONE, RUNNING, PAUSED, STOPPED;
+
+    val actionName: String
+        get() = when (this) {
+            NONE,
+            STOPPED -> "Start"
+            PAUSED -> "Resume"
+            RUNNING -> "Pause"
+        }
+}
+
+enum class NotificationActionType {
+    START, RESUME, PAUSE, STOP;
+
+    val actionName: String
+        get() = when (this) {
+            START -> "Start"
+            RESUME -> "Resume"
+            PAUSE -> "Pause"
+            STOP -> "Stop"
+        }
+
+    val actionIcon: Int
+        get() = when (this) {
+            START -> R.drawable.ic_play
+            RESUME -> R.drawable.ic_play
+            PAUSE -> R.drawable.ic_pause
+            STOP -> R.drawable.ic_stop
+        }
+
+    val actionIntent: String
+        get() = when (this) {
+            START -> RunTrackingService.ACTION_START_OR_RESUME_SERVICE
+            RESUME -> RunTrackingService.ACTION_START_OR_RESUME_SERVICE
+            PAUSE -> RunTrackingService.ACTION_PAUSE_SERVICE
+            STOP -> RunTrackingService.ACTION_STOP_SERVICE
+        }
+}
+
 @AndroidEntryPoint
 class RunTrackingService : LifecycleService() {
     companion object {
+        val currentLocation = MutableStateFlow<LatLng?>(null)
+        val trackingState = MutableStateFlow(TrackingState.NONE)
+        val pathPoints = MutableStateFlow(mutableListOf<LatLng>())
+        val runTime = MutableStateFlow(0L)
+
         const val ACTION_START_OR_RESUME_SERVICE = "ACTION_START_OR_RESUME_SERVICE"
         const val ACTION_PAUSE_SERVICE = "ACTION_PAUSE_SERVICE"
         const val ACTION_STOP_SERVICE = "ACTION_STOP_SERVICE"
-
-        const val ACTION_OPEN_RUN_TRACKER = "ACTION_OPEN_RUN_TRACKER"
+        const val ACTION_REQUEST_CURRENT_LOCATION = "ACTION_REQUEST_CURRENT_LOCATION"
 
         const val NOTIFICATION_ID = 1
         const val NOTIFICATION_CHANNEL_ID = "running_tracker"
@@ -44,30 +88,36 @@ class RunTrackingService : LifecycleService() {
 
         const val LOCATION_UPDATE_INTERVAL = 10_000L
 
-        enum class TrackingState {
-            NONE,
-            RUNNING,
-            PAUSED,
-            STOPPED
+        fun onRequestCurrentLocation(context: Context) {
+            context.startService(
+                Intent(context, RunTrackingService::class.java).apply {
+                    action = ACTION_REQUEST_CURRENT_LOCATION
+                },
+            )
         }
 
-        val currentLocation = MutableStateFlow<LatLng?>(null)
-        val trackingState = MutableStateFlow(TrackingState.NONE)
-        val pathPoints = MutableStateFlow(mutableListOf<LatLng>())
-        val runTime = MutableStateFlow(0L)
+        fun onStartService(context: Context) {
+            context.startService(
+                Intent(context, RunTrackingService::class.java).apply {
+                    action = ACTION_START_OR_RESUME_SERVICE
+                },
+            )
+        }
 
-        @SuppressLint("MissingPermission")
-        fun getCurrentLocation(context: Context) {
-            Timber.d("/// getCurrentLocation()")
-            if (PermissionUtility.hasPermissions(context, PermissionUtility.runTrackingPermissions)) {
-                val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
-                fusedLocationProviderClient.lastLocation.addOnSuccessListener { position ->
-                    Timber.d("/// fusedLocationProviderClient: $position")
-                    if (position != null) {
-                        currentLocation.value = LatLng(position.latitude, position.longitude)
-                    }
-                }
-            }
+        fun onPauseService(context: Context) {
+            context.startService(
+                Intent(context, RunTrackingService::class.java).apply {
+                    action = ACTION_PAUSE_SERVICE
+                },
+            )
+        }
+
+        fun onStopService(context: Context) {
+            context.startService(
+                Intent(context, RunTrackingService::class.java).apply {
+                    action = ACTION_STOP_SERVICE
+                },
+            )
         }
     }
 
@@ -86,6 +136,7 @@ class RunTrackingService : LifecycleService() {
     private var timerJob: Job? = null
     private var trackingJob: Job? = null
     private var notificationJob: Job? = null
+    private var requestCurrentLocationJob: Job? = null
 
     private var isTimerRunning = false
     private var startTime = 0L
@@ -94,7 +145,6 @@ class RunTrackingService : LifecycleService() {
         override fun onLocationResult(p0: LocationResult) {
             super.onLocationResult(p0)
             for (location in p0.locations) {
-                currentLocation.value = LatLng(location.latitude, location.longitude)
                 if (trackingState.value == TrackingState.RUNNING) {
                     val points = pathPoints.value.toMutableList().apply {
                         add(LatLng(location.latitude, location.longitude))
@@ -102,13 +152,15 @@ class RunTrackingService : LifecycleService() {
                     pathPoints.value = points
                 }
             }
-            Timber.d("currentLocation: ${currentLocation.value}")
-            Timber.d("pathPoints: ${pathPoints.value}")
+            Timber.d("/// pathPoints: ${pathPoints.value}")
         }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
+            ACTION_REQUEST_CURRENT_LOCATION -> {
+                requestCurrentLocation()
+            }
             ACTION_START_OR_RESUME_SERVICE -> {
                 if (trackingState.value == TrackingState.PAUSED) {
                     resumeTracking()
@@ -127,6 +179,22 @@ class RunTrackingService : LifecycleService() {
     }
 
     @SuppressLint("MissingPermission")
+    private fun requestCurrentLocation() {
+        if (PermissionUtility.hasPermissions(this, PermissionUtility.runTrackingPermissions)) {
+            requestCurrentLocationJob = SupervisorJob()
+            requestCurrentLocationJob?.let { requestCurrentLocationJob ->
+                CoroutineScope(Dispatchers.IO + requestCurrentLocationJob).launch {
+                    fusedLocationProviderClient.lastLocation.addOnSuccessListener { position ->
+                        Timber.d("/// fusedLocationProviderClient.addOnSuccessListener: $position")
+                        if (position != null) {
+                            currentLocation.value = LatLng(position.latitude, position.longitude)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         notificationBuilder = baseNotificationBuilder
@@ -182,6 +250,8 @@ class RunTrackingService : LifecycleService() {
         pathPoints.value = mutableListOf()
         trackingJob?.cancel()
         trackingJob = null
+        requestCurrentLocationJob?.cancel()
+        requestCurrentLocationJob = null
     }
 
     private fun startTimer() {
@@ -248,7 +318,7 @@ class RunTrackingService : LifecycleService() {
         runTime: Long,
         startTime: Long
     ) {
-        if (points.isEmpty()) return
+        if (points.size > 10) return
         CoroutineScope(Dispatchers.IO).launch {
             val runTracker = RunTrackerEntity(
                 startTime = startTime,
@@ -281,59 +351,44 @@ class RunTrackingService : LifecycleService() {
     }
 
     private fun updateNotificationTracking(trackingState: TrackingState) {
-        val actions: List<Triple<String, Int, PendingIntent>> = when (trackingState) {
-            TrackingState.NONE -> listOf(
-                getTrackerAction(
-                    actionName = "Start",
-                    actionIcon = R.drawable.ic_play,
-                    intentAction = ACTION_START_OR_RESUME_SERVICE,
-                ),
-            )
-            TrackingState.RUNNING -> listOf(
-                getTrackerAction(
-                    actionName = "Pause",
-                    actionIcon = R.drawable.ic_pause,
-                    intentAction = ACTION_PAUSE_SERVICE,
-                ),
-                getTrackerAction(
-                    actionName = "Stop",
-                    actionIcon = R.drawable.ic_stop,
-                    intentAction = ACTION_STOP_SERVICE,
-                ),
-            )
-            TrackingState.PAUSED -> listOf(
-                getTrackerAction(
-                    actionName = "Resume",
-                    actionIcon = R.drawable.ic_play,
-                    intentAction = ACTION_START_OR_RESUME_SERVICE,
-                ),
-                getTrackerAction(
-                    actionName = "Stop",
-                    actionIcon = R.drawable.ic_stop,
-                    intentAction = ACTION_STOP_SERVICE,
-                ),
-            )
-            else -> emptyList()
-        }
         notificationBuilder.clearActions()
-        actions.forEach { (actionName, actionIcon, pendingIntent) ->
-            notificationBuilder.addAction(actionIcon, actionName, pendingIntent)
+        createNotificationTrackingActions(trackingState).forEach { action ->
+            notificationBuilder.addAction(
+                action.actionIcon,
+                action.actionName,
+                createNotificationTrackingActionPendingIntent(action),
+            )
         }
         notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
     }
 
-    private fun getTrackerAction(
-        actionName: String,
-        actionIcon: Int,
-        intentAction: String,
-    ): Triple<String, Int, PendingIntent> {
-        val intent = Intent(this, RunTrackingService::class.java).apply {
-            action = intentAction
+    private fun createNotificationTrackingActions(trackingState: TrackingState): List<NotificationActionType> {
+        return when (trackingState) {
+            TrackingState.NONE -> listOf(
+                NotificationActionType.START,
+            )
+            TrackingState.RUNNING -> listOf(
+                NotificationActionType.PAUSE,
+                NotificationActionType.STOP,
+            )
+            TrackingState.PAUSED -> listOf(
+                NotificationActionType.RESUME,
+                NotificationActionType.STOP,
+            )
+            else -> emptyList()
         }
-        return Triple(
-            actionName,
-            actionIcon,
-            PendingIntent.getService(this, 0, intent, FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE),
+    }
+
+    private fun createNotificationTrackingActionPendingIntent(
+        notificationActionType: NotificationActionType
+    ): PendingIntent {
+        return PendingIntent.getService(
+            this,
+            0,
+            Intent(this, RunTrackingService::class.java).apply {
+                action = notificationActionType.actionIntent
+            },
+            FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE,
         )
     }
 }

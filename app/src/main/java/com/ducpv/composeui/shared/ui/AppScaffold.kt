@@ -17,7 +17,6 @@ fun AppScaffold(
     navigationIcon: ImageVector? = null,
     snackHostState: SnackbarHostState,
     onNavigationClick: () -> Unit = {},
-    onOpenSourceClick: () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -28,7 +27,6 @@ fun AppScaffold(
                 navigationIcon = navigationIcon,
                 scrollBehavior = scrollBehavior,
                 onNavigationClick = onNavigationClick,
-                onOpenSourceClick = onOpenSourceClick,
             )
         },
         snackbarHost = { SnackbarHost(snackHostState) },

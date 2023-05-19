@@ -10,88 +10,139 @@ import javax.inject.Inject
 /**
  * Created by pvduc9773 on 30/03/2023.
  */
+data class GameUiState(
+    val currentPlayer: Player? = null,
+    val victoryType: VictoryType = VictoryType.NONE,
+) {
+    val gameState: GameState
+        get() {
+            if (currentPlayer == null) {
+                return GameState.START
+            }
+            return when (victoryType) {
+                VictoryType.DRAW -> { // game draw
+                    GameState.DRAW
+                }
+                VictoryType.NONE -> { // game running
+                    if (currentPlayer == Player.CIRCLE) {
+                        GameState.CIRCLE_TURN
+                    } else {
+                        GameState.CROSS_TURN
+                    }
+                }
+                else -> { // game over
+                    if (currentPlayer == Player.CIRCLE) {
+                        GameState.CIRCLE_VICTORY
+                    } else {
+                        GameState.CROSS_VICTORY
+                    }
+                }
+            }
+        }
+
+    val isGameStart: Boolean
+        get() = gameState == GameState.START
+
+    val isGameOver: Boolean
+        get() = victoryType != VictoryType.NONE
+}
+
 @HiltViewModel
 class GameViewModel @Inject constructor() : ViewModel() {
-    val boardItems = mutableMapOf(
-        1 to BoardCellValue.NONE,
-        2 to BoardCellValue.NONE,
-        3 to BoardCellValue.NONE,
-        4 to BoardCellValue.NONE,
-        5 to BoardCellValue.NONE,
-        6 to BoardCellValue.NONE,
-        7 to BoardCellValue.NONE,
-        8 to BoardCellValue.NONE,
-        9 to BoardCellValue.NONE,
+    val cells = mutableMapOf(
+        1 to Cell.NONE,
+        2 to Cell.NONE,
+        3 to Cell.NONE,
+        4 to Cell.NONE,
+        5 to Cell.NONE,
+        6 to Cell.NONE,
+        7 to Cell.NONE,
+        8 to Cell.NONE,
+        9 to Cell.NONE,
     )
-    var gameState by mutableStateOf(GameState())
+    var gameUiState by mutableStateOf(GameUiState())
 
-    fun onResetGame() {
-        boardItems.forEach { (i, _) ->
-            boardItems[i] = BoardCellValue.NONE
+    fun onActionClickListener() {
+        if (gameUiState.isGameStart || gameUiState.isGameOver) {
+            onResetGame()
+            return
         }
-        gameState = gameState.copy(
-            currentTurn = BoardCellValue.values().filter { it != BoardCellValue.NONE }.random(),
+        if (onCheckBoardEmpty()) { // action change current player is start
+            gameUiState = gameUiState.copy(
+                currentPlayer = gameUiState.currentPlayer?.toNextPlayer(),
+            )
+            return
+        }
+    }
+
+    private fun onResetGame() {
+        cells.forEach { (i, _) ->
+            cells[i] = Cell.NONE
+        }
+        gameUiState = gameUiState.copy(
+            currentPlayer = Player.values().random(),
             victoryType = VictoryType.NONE,
         )
     }
 
-    fun onSelectCell(cellNo: Int) {
-        if (boardItems[cellNo] != BoardCellValue.NONE) return
-        if (gameState.victoryType != VictoryType.NONE) return
-        boardItems[cellNo] = gameState.currentTurn
-        if (onCheckVictory(gameState.currentTurn)) {
-            return
-        }
-        if (onCheckFullBoard()) {
-            gameState = gameState.copy(
-                victoryType = VictoryType.DRAW,
-            )
-            return
-        }
-        gameState = gameState.copy(
-            currentTurn = gameState.currentTurn.nextTurn,
+    fun onCellSelected(cellNo: Int) {
+        if (gameUiState.isGameOver) return
+        if (cells[cellNo] != Cell.NONE) return // cell is selected
+        val currentPlayer = gameUiState.currentPlayer ?: return
+        cells[cellNo] = currentPlayer.toCell() // set data to cell selected
+        gameUiState = gameUiState.copy(
+            victoryType = getVictoryType(), // check game victory
         )
+        if (!gameUiState.isGameOver) {
+            gameUiState = gameUiState.copy(
+                currentPlayer = gameUiState.currentPlayer?.toNextPlayer(),
+            )
+        }
     }
 
-    private fun onCheckFullBoard(): Boolean {
-        return boardItems.all { it.value != BoardCellValue.NONE }
+    private fun onCheckBoardFull(): Boolean {
+        return cells.all { it.value != Cell.NONE }
     }
 
-    private fun onCheckVictory(boardValue: BoardCellValue): Boolean {
-        when {
-            boardItems[1] == boardValue && boardItems[2] == boardValue && boardItems[3] == boardValue -> {
-                gameState = gameState.copy(victoryType = VictoryType.HORIZONTAL1)
-                return true
+    private fun onCheckBoardEmpty(): Boolean {
+        return cells.all { it.value == Cell.NONE }
+    }
+
+    private fun getVictoryType(): VictoryType {
+        val currentPlayer = gameUiState.currentPlayer ?: return VictoryType.NONE
+        val currentCells = cells.filter { it.value == currentPlayer.toCell() }
+        return when {
+            currentCells.containsKey(1) && currentCells.containsKey(2) && currentCells.containsKey(3) -> {
+                VictoryType.HORIZONTAL1
             }
-            boardItems[4] == boardValue && boardItems[5] == boardValue && boardItems[6] == boardValue -> {
-                gameState = gameState.copy(victoryType = VictoryType.HORIZONTAL2)
-                return true
+            currentCells.containsKey(4) && currentCells.containsKey(5) && currentCells.containsKey(6) -> {
+                VictoryType.HORIZONTAL2
             }
-            boardItems[7] == boardValue && boardItems[8] == boardValue && boardItems[9] == boardValue -> {
-                gameState = gameState.copy(victoryType = VictoryType.HORIZONTAL3)
-                return true
+            currentCells.containsKey(7) && currentCells.containsKey(8) && currentCells.containsKey(9) -> {
+                VictoryType.HORIZONTAL3
             }
-            boardItems[1] == boardValue && boardItems[4] == boardValue && boardItems[7] == boardValue -> {
-                gameState = gameState.copy(victoryType = VictoryType.VERTICAL1)
-                return true
+            currentCells.containsKey(1) && currentCells.containsKey(4) && currentCells.containsKey(7) -> {
+                VictoryType.VERTICAL1
             }
-            boardItems[2] == boardValue && boardItems[5] == boardValue && boardItems[8] == boardValue -> {
-                gameState = gameState.copy(victoryType = VictoryType.VERTICAL2)
-                return true
+            currentCells.containsKey(2) && currentCells.containsKey(5) && currentCells.containsKey(8) -> {
+                VictoryType.VERTICAL2
             }
-            boardItems[3] == boardValue && boardItems[6] == boardValue && boardItems[9] == boardValue -> {
-                gameState = gameState.copy(victoryType = VictoryType.VERTICAL3)
-                return true
+            currentCells.containsKey(3) && currentCells.containsKey(6) && currentCells.containsKey(9) -> {
+                VictoryType.VERTICAL3
             }
-            boardItems[1] == boardValue && boardItems[5] == boardValue && boardItems[9] == boardValue -> {
-                gameState = gameState.copy(victoryType = VictoryType.DIAGONAL1)
-                return true
+            currentCells.containsKey(1) && currentCells.containsKey(5) && currentCells.containsKey(9) -> {
+                VictoryType.DIAGONAL1
             }
-            boardItems[3] == boardValue && boardItems[5] == boardValue && boardItems[7] == boardValue -> {
-                gameState = gameState.copy(victoryType = VictoryType.DIAGONAL2)
-                return true
+            currentCells.containsKey(3) && currentCells.containsKey(5) && currentCells.containsKey(7) -> {
+                VictoryType.DIAGONAL2
             }
-            else -> return false
+            else -> {
+                if (onCheckBoardFull()) {
+                    VictoryType.DRAW
+                } else {
+                    VictoryType.NONE
+                }
+            }
         }
     }
 }

@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,8 +27,7 @@ class MainViewModel @Inject constructor() : ViewModel() {
     fun initialize() {
         viewModelScope.launch {
             _state.value = MainAppState.Loading
-            // TODO initialize app config
-            delay(1.seconds)
+            delay(1_000L)
             _state.value = MainAppState.Completed
         }
     }
