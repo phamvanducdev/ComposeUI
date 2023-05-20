@@ -13,8 +13,8 @@ enum class GameState {
     START, // Bắt đầu game
     CIRCLE_TURN, // Lượt chơi 〇
     CROSS_TURN, // Lượt chơi X
-    CIRCLE_VICTORY, // 〇 thắng
-    CROSS_VICTORY, // X thắng
+    CIRCLE_WON, // 〇 thắng
+    CROSS_WON, // X thắng
     DRAW; // Hoà
 
     val title: String
@@ -22,8 +22,8 @@ enum class GameState {
             START -> "Start game"
             CIRCLE_TURN -> "Circle turn"
             CROSS_TURN -> "Cross turn"
-            CIRCLE_VICTORY -> "Reset game"
-            CROSS_VICTORY -> "Reset game"
+            CIRCLE_WON -> "Reset game"
+            CROSS_WON -> "Reset game"
             DRAW -> "Reset game"
         }
 
@@ -32,8 +32,8 @@ enum class GameState {
             START -> ThemeColor.White.color
             CIRCLE_TURN -> ThemeColor.White.color
             CROSS_TURN -> ThemeColor.White.color
-            CIRCLE_VICTORY -> ThemeColor.White.color
-            CROSS_VICTORY -> ThemeColor.White.color
+            CIRCLE_WON -> ThemeColor.White.color
+            CROSS_WON -> ThemeColor.White.color
             DRAW -> ThemeColor.White.color
         }
 
@@ -42,8 +42,8 @@ enum class GameState {
             START -> ThemeColor.Gray.color.alpha20
             CIRCLE_TURN -> ThemeColor.Green.color.alpha20
             CROSS_TURN -> ThemeColor.Red.color.alpha20
-            CIRCLE_VICTORY -> ThemeColor.Green.color.alpha20
-            CROSS_VICTORY -> ThemeColor.Red.color.alpha20
+            CIRCLE_WON -> ThemeColor.Green.color.alpha20
+            CROSS_WON -> ThemeColor.Red.color.alpha20
             DRAW -> ThemeColor.Pink.color.alpha20
         }
 
@@ -52,8 +52,8 @@ enum class GameState {
             START -> ThemeColor.Gray.color
             CIRCLE_TURN -> ThemeColor.Green.color
             CROSS_TURN -> ThemeColor.Red.color
-            CIRCLE_VICTORY -> ThemeColor.Green.color
-            CROSS_VICTORY -> ThemeColor.Red.color
+            CIRCLE_WON -> ThemeColor.Green.color
+            CROSS_WON -> ThemeColor.Red.color
             DRAW -> ThemeColor.Pink.color
         }
 }
@@ -86,7 +86,7 @@ enum class Cell {
     NONE
 }
 
-enum class VictoryType {
+enum class WinnerType {
     HORIZONTAL1,
     HORIZONTAL2,
     HORIZONTAL3,
