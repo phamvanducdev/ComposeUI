@@ -12,18 +12,18 @@ import javax.inject.Inject
  */
 data class GameUiState(
     val currentPlayer: Player? = null,
-    val victoryType: VictoryType = VictoryType.NONE,
+    val winnerType: WinnerType = WinnerType.NONE,
 ) {
     val gameState: GameState
         get() {
             if (currentPlayer == null) {
                 return GameState.START
             }
-            return when (victoryType) {
-                VictoryType.DRAW -> { // game draw
+            return when (winnerType) {
+                WinnerType.DRAW -> { // game draw
                     GameState.DRAW
                 }
-                VictoryType.NONE -> { // game running
+                WinnerType.NONE -> { // game running
                     if (currentPlayer == Player.CIRCLE) {
                         GameState.CIRCLE_TURN
                     } else {
@@ -32,9 +32,9 @@ data class GameUiState(
                 }
                 else -> { // game over
                     if (currentPlayer == Player.CIRCLE) {
-                        GameState.CIRCLE_VICTORY
+                        GameState.CIRCLE_WON
                     } else {
-                        GameState.CROSS_VICTORY
+                        GameState.CROSS_WON
                     }
                 }
             }
@@ -44,7 +44,7 @@ data class GameUiState(
         get() = gameState == GameState.START
 
     val isGameOver: Boolean
-        get() = victoryType != VictoryType.NONE
+        get() = winnerType != WinnerType.NONE
 }
 
 @HiltViewModel
@@ -81,7 +81,7 @@ class GameViewModel @Inject constructor() : ViewModel() {
         }
         gameUiState = gameUiState.copy(
             currentPlayer = Player.values().random(),
-            victoryType = VictoryType.NONE,
+            winnerType = WinnerType.NONE,
         )
     }
 
@@ -91,7 +91,7 @@ class GameViewModel @Inject constructor() : ViewModel() {
         val currentPlayer = gameUiState.currentPlayer ?: return
         cells[cellNo] = currentPlayer.toCell() // set data to cell selected
         gameUiState = gameUiState.copy(
-            victoryType = getVictoryType(), // check game victory
+            winnerType = getVictoryType(), // check game victory
         )
         if (!gameUiState.isGameOver) {
             gameUiState = gameUiState.copy(
@@ -108,39 +108,39 @@ class GameViewModel @Inject constructor() : ViewModel() {
         return cells.all { it.value == Cell.NONE }
     }
 
-    private fun getVictoryType(): VictoryType {
-        val currentPlayer = gameUiState.currentPlayer ?: return VictoryType.NONE
+    private fun getVictoryType(): WinnerType {
+        val currentPlayer = gameUiState.currentPlayer ?: return WinnerType.NONE
         val currentCells = cells.filter { it.value == currentPlayer.toCell() }
         return when {
             currentCells.containsKey(1) && currentCells.containsKey(2) && currentCells.containsKey(3) -> {
-                VictoryType.HORIZONTAL1
+                WinnerType.HORIZONTAL1
             }
             currentCells.containsKey(4) && currentCells.containsKey(5) && currentCells.containsKey(6) -> {
-                VictoryType.HORIZONTAL2
+                WinnerType.HORIZONTAL2
             }
             currentCells.containsKey(7) && currentCells.containsKey(8) && currentCells.containsKey(9) -> {
-                VictoryType.HORIZONTAL3
+                WinnerType.HORIZONTAL3
             }
             currentCells.containsKey(1) && currentCells.containsKey(4) && currentCells.containsKey(7) -> {
-                VictoryType.VERTICAL1
+                WinnerType.VERTICAL1
             }
             currentCells.containsKey(2) && currentCells.containsKey(5) && currentCells.containsKey(8) -> {
-                VictoryType.VERTICAL2
+                WinnerType.VERTICAL2
             }
             currentCells.containsKey(3) && currentCells.containsKey(6) && currentCells.containsKey(9) -> {
-                VictoryType.VERTICAL3
+                WinnerType.VERTICAL3
             }
             currentCells.containsKey(1) && currentCells.containsKey(5) && currentCells.containsKey(9) -> {
-                VictoryType.DIAGONAL1
+                WinnerType.DIAGONAL1
             }
             currentCells.containsKey(3) && currentCells.containsKey(5) && currentCells.containsKey(7) -> {
-                VictoryType.DIAGONAL2
+                WinnerType.DIAGONAL2
             }
             else -> {
                 if (onCheckBoardFull()) {
-                    VictoryType.DRAW
+                    WinnerType.DRAW
                 } else {
-                    VictoryType.NONE
+                    WinnerType.NONE
                 }
             }
         }
