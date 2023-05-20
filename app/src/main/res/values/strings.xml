@@ -1,6 +1,5 @@
 <resources>
     <string name="google_maps_api_key">AIzaSyB6jhvzvb2DN6y0OhUU8TGUcOgglrFH3I0</string>
-
     <string name="tic_tac_toe_game">TicTacToe Game</string>
     <string name="run_tracker">Run Tracker</string>
 </resources>
