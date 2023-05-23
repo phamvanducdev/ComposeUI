@@ -1,8 +1,9 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-    id 'com.google.gms.google-services'
     id 'dagger.hilt.android.plugin'
+    id 'com.google.gms.google-services'
+    id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
     id 'kotlin-kapt'
 }
 
@@ -68,8 +69,8 @@ android {
         compose true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion composeCompilerVersion
-        kotlinCompilerVersion kotlinVersion
+        kotlinCompilerVersion '1.8.10'
+        kotlinCompilerExtensionVersion '1.4.4'
     }
     packagingOptions {
         resources {
