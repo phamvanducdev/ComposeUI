@@ -16,16 +16,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ducpv.composeui.R
 import com.ducpv.composeui.domain.model.RunTracker
 import com.ducpv.composeui.domain.model.toLocation
 import com.ducpv.composeui.domain.service.RunTrackingService
 import com.ducpv.composeui.domain.service.TrackingState
+import com.ducpv.composeui.domain.service.millisecondToRunTimeFormat
 import com.ducpv.composeui.feature.tictactoegame.shapeBackground
+import com.ducpv.composeui.navigation.AppState
+import com.ducpv.composeui.navigation.NavigationIcon
 import com.ducpv.composeui.shared.theme.ThemeColor
 import com.ducpv.composeui.shared.theme.color
 import com.ducpv.composeui.shared.utility.GoogleMapUtility
 import com.ducpv.composeui.shared.utility.PermissionUtility
-import com.ducpv.composeui.shared.utility.millisecondToTimeFormat
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -44,8 +47,14 @@ import timber.log.Timber
 )
 @Composable
 fun RunTrackerScreen(
+    appState: AppState,
     viewModel: RunTrackerViewModel = hiltViewModel()
 ) {
+    LaunchedEffect(Unit) {
+        appState.topBarTitle = R.string.run_tracker
+        appState.navigationIcon = NavigationIcon.Menu
+    }
+
     val context: Context = LocalContext.current
     val screenWidthDp = LocalConfiguration.current.screenWidthDp
 
@@ -145,7 +154,7 @@ fun RunTrackerScreen(
                     Text(text = "Lat: ${currentLocation.value?.latitude ?: "N/A"}")
                     Text(text = "Lng: ${currentLocation.value?.longitude ?: "N/A"}")
                     if (runTime.value > 0) {
-                        Text(text = runTime.value.millisecondToTimeFormat())
+                        Text(text = runTime.value.millisecondToRunTimeFormat())
                     }
                 }
 

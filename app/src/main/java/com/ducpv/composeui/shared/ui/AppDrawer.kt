@@ -13,8 +13,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.ducpv.composeui.R
-import com.ducpv.composeui.navigation.TopLevelDestination
+import com.ducpv.composeui.navigation.NavGraphDestination
 import com.ducpv.composeui.shared.theme.ThemeColor
 import com.ducpv.composeui.shared.theme.alpha10
 import com.ducpv.composeui.shared.theme.color
@@ -22,12 +23,11 @@ import com.ducpv.composeui.shared.theme.color
 /**
  * Created by pvduc9773 on 24/04/2023.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppDrawer(
-    destinations: List<TopLevelDestination>,
-    currentDestination: NavDestination?,
-    navigateToTopLevelDestination: (TopLevelDestination) -> Unit
+    currentNavDestination: NavDestination?,
+    navGraphDestinations: List<NavGraphDestination>,
+    navigateToNavGraphDestination: (NavGraphDestination) -> Unit
 ) {
     DismissibleDrawerSheet(
         modifier = Modifier.fillMaxWidth(0.75f),
@@ -44,21 +44,19 @@ fun AppDrawer(
             Text(text = stringResource(id = R.string.app_name))
         }
         Divider()
-        destinations.forEach { destination ->
-            val selected = currentDestination.isTopLevelDestinationInHierarchy(destination)
+        navGraphDestinations.forEach { navGraph ->
             DrawerItem(
-                icon = destination.icon,
-                label = destination.label,
-                selected = selected,
+                icon = navGraph.icon,
+                label = navGraph.title,
+                selected = currentNavDestination.isNavGraphDestinationInHierarchy(navGraph),
                 onItemClick = {
-                    navigateToTopLevelDestination(destination)
+                    navigateToNavGraphDestination(navGraph)
                 },
             )
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DrawerItem(
     icon: ImageVector,
@@ -91,7 +89,7 @@ fun DrawerItem(
     )
 }
 
-private fun NavDestination?.isTopLevelDestinationInHierarchy(destination: TopLevelDestination) =
+private fun NavDestination?.isNavGraphDestinationInHierarchy(destination: NavGraphDestination) =
     this?.hierarchy?.any {
         it.route?.contains(destination.graphRoute, true) ?: false
     } ?: false

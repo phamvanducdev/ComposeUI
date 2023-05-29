@@ -1,10 +1,8 @@
 package com.ducpv.composeui.di
 
-import com.ducpv.composeui.domain.database.dao.RunTrackerDao
-import com.ducpv.composeui.domain.repository.RunTrackerRepository
-import com.ducpv.composeui.domain.repository.RunTrackerRepositoryImpl
+import com.ducpv.composeui.domain.repository.*
+import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 
@@ -13,9 +11,19 @@ import dagger.hilt.components.SingletonComponent
  */
 @Module
 @InstallIn(SingletonComponent::class)
-class RepositoryModule {
-    @Provides
-    fun providesRunTrackerRepository(runTrackerDao: RunTrackerDao): RunTrackerRepository {
-        return RunTrackerRepositoryImpl(runTrackerDao)
-    }
+interface RepositoryModule {
+    @Binds
+    fun providesRunTrackerRepository(
+        runTrackerRepository: RunTrackerRepositoryImpl
+    ): RunTrackerRepository
+
+    @Binds
+    fun providesAuthRepository(
+        authRepository: AuthRepositoryImpl
+    ): AuthRepository
+
+    @Binds
+    fun providesFireStoreRepository(
+        fireStoreRepository: FireStoreRepositoryImpl
+    ): FireStoreRepository
 }

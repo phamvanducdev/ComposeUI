@@ -1,5 +1,6 @@
 package com.ducpv.composeui.navigation
 
+import android.content.Context
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -13,68 +14,56 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navOptions
 import com.ducpv.composeui.R
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import com.google.accompanist.navigation.material.BottomSheetNavigator
+import com.google.accompanist.navigation.material.ExperimentalMaterialNavigationApi
+import com.google.accompanist.navigation.material.rememberBottomSheetNavigator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 /**
  * Created by pvduc9773 on 03/04/2023.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterialNavigationApi::class)
 class AppState(
-    val drawerState: DrawerState,
-    val navController: NavHostController,
+    val appContext: Context,
     val coroutineScope: CoroutineScope,
-    val snackHostState: SnackbarHostState
+    val drawerState: DrawerState,
+    val snackHostState: SnackbarHostState,
+    val navController: NavHostController,
+    val bottomSheetNavigator: BottomSheetNavigator
 ) {
+    var topBarTitle: Int? by mutableStateOf(null)
+
+    var navigationIcon: NavigationIcon? by mutableStateOf(null)
+
+    var drawerGesturesEnabled: Boolean by mutableStateOf(true)
+
     init {
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            drawerGesturesEnabled = if (multipleTopDestination) {
-                val destinations = TopLevelDestination.values().toList() - TopLevelDestination.RunTracker
-                destination.route in destinations.map { it.startRoute }
+        navController.addOnDestinationChangedListener { _, currentDestination, _ ->
+            drawerGesturesEnabled = if (navGraphDestinations.size > 1) {
+                val navGraphDestinations = NavGraphDestination.values().toList() - NavGraphDestination.RunTracker
+                currentDestination.route in navGraphDestinations.map { it.startRoute }
             } else {
                 false
             }
         }
     }
 
-    var drawerGesturesEnabled by mutableStateOf(true)
-
-    val topLevelDestinations = TopLevelDestination.values().asList()
+    val navGraphDestinations = NavGraphDestination.values().asList()
 
     val currentDestination: NavDestination?
         @Composable get() = navController.currentBackStackEntryAsState().value?.destination
 
-    private val currentTopLevelDestination: TopLevelDestination?
-        get() = topLevelDestinations.find {
-            it.startRoute == navController.currentDestination?.route
-        }
-
-    private val multipleTopDestination: Boolean
-        get() = topLevelDestinations.size > 1
-
-    val topBarTitle: Int?
-        @Composable get() = NavDestinations.findByRoute(currentDestination?.route)?.label
-
-    val navigationIcon: ImageVector?
-        get() {
-            if (topLevelDestinations.size <= 1) return null
-            return if (currentTopLevelDestination != null) {
-                Icons.Default.Menu
-            } else {
-                Icons.Default.ArrowBack
-            }
-        }
-
     fun onNavigationClick() {
-        if (currentTopLevelDestination != null) {
-            onChangeDrawerState()
-        } else {
-            navController.popBackStack()
+        when (navigationIcon) {
+            NavigationIcon.Menu -> onChangeDrawerState()
+            NavigationIcon.Back -> navController.popBackStack()
+            else -> Unit
         }
     }
 
-    fun navigateToTopLevelDestination(destination: TopLevelDestination) {
-        val topLevelNavOptions = navOptions {
+    fun navigateToNavGraphDestination(navGraph: NavGraphDestination) {
+        val navOptions = navOptions {
             // Pop up to the start destination of the graph to
             // avoid building up a large stack of destinations
             // on the back stack as users select items
@@ -87,10 +76,11 @@ class AppState(
             // Restore state when re-selecting a previously selected item
             restoreState = true
         }
-        when (destination) {
-            TopLevelDestination.TicTacToeGame,
-            TopLevelDestination.RunTracker -> {
-                navController.navigate(destination.graphRoute, topLevelNavOptions)
+        when (navGraph) {
+            NavGraphDestination.TicTacToeGame,
+            NavGraphDestination.RunTracker,
+            NavGraphDestination.Chat -> {
+                navController.navigate(navGraph.graphRoute, navOptions)
                 onChangeDrawerState()
             }
         }
@@ -106,47 +96,72 @@ class AppState(
             }
         }
     }
+
+    fun showSnackBarMessage(messageRes: Int) {
+        coroutineScope.launch {
+            snackHostState.showSnackbar(appContext.getString(messageRes))
+        }
+    }
+
+    fun showSnackBarMessage(message: String) {
+        coroutineScope.launch {
+            snackHostState.showSnackbar(message)
+        }
+    }
 }
 
-enum class TopLevelDestination(
+enum class NavGraphDestination(
     val icon: ImageVector,
-    val label: Int,
-    val startRoute: String,
-    val graphRoute: String
+    val title: Int,
+    val graphRoute: String,
+    val startRoute: String
 ) {
     TicTacToeGame(
         icon = Icons.Default.Gamepad,
-        label = R.string.tic_tac_toe_game,
-        startRoute = NavDestinations.TicTacToeGame.route,
-        graphRoute = "tic_tac_toe_game_graph",
+        title = R.string.tic_tac_toe_game,
+        graphRoute = "ticTacToeGraph",
+        startRoute = "ticTacToe",
     ),
     RunTracker(
         icon = Icons.Default.DirectionsRun,
-        label = R.string.run_tracker,
-        startRoute = NavDestinations.RunTracker.route,
-        graphRoute = "running_route_graph",
+        title = R.string.run_tracker,
+        graphRoute = "runTrackerGraph",
+        startRoute = "runTracker",
+    ),
+    Chat(
+        icon = Icons.Default.Inbox,
+        title = R.string.chat,
+        graphRoute = "chatGraph",
+        startRoute = "chatRooms",
     )
 }
 
+enum class NavigationIcon(val icon: ImageVector) {
+    Menu(Icons.Default.Menu),
+    Back(Icons.Default.ArrowBack)
+}
+
 @OptIn(
-    ExperimentalMaterial3Api::class,
     ExperimentalAnimationApi::class,
+    ExperimentalMaterialNavigationApi::class
 )
 @Composable
 fun rememberAppState(
-    drawerState: DrawerState = rememberDrawerState(
-        initialValue = DrawerValue.Closed,
-    ),
-    navController: NavHostController = rememberAnimatedNavController(),
+    appContext: Context,
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
+    drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
     snackHostState: SnackbarHostState = remember { SnackbarHostState() },
+    bottomSheetNavigator: BottomSheetNavigator = rememberBottomSheetNavigator(),
+    navController: NavHostController = rememberAnimatedNavController(bottomSheetNavigator),
 ): AppState {
-    return remember(drawerState, navController, coroutineScope, snackHostState) {
+    return remember(appContext, coroutineScope, drawerState, snackHostState, navController, bottomSheetNavigator) {
         AppState(
-            drawerState,
-            navController,
+            appContext,
             coroutineScope,
+            drawerState,
             snackHostState,
+            navController,
+            bottomSheetNavigator,
         )
     }
 }
