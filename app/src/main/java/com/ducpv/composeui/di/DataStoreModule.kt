@@ -26,7 +26,7 @@ class DataStoreModule {
         return AuthDataStoreImpl(
             dataStore = PreferenceDataStoreFactory.create {
                 context.preferencesDataStoreFile("auth_datastore")
-            }
+            },
         )
     }
 }

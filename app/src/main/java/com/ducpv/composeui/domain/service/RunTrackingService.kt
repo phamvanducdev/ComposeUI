@@ -13,9 +13,7 @@ import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import com.ducpv.composeui.R
-import com.ducpv.composeui.domain.database.dao.RunTrackerDao
-import com.ducpv.composeui.domain.database.entity.PointEntity
-import com.ducpv.composeui.domain.database.entity.RunTrackerEntity
+import com.ducpv.composeui.domain.usecase.runtracker.InsertRunTrackerUseCase
 import com.ducpv.composeui.shared.utility.PermissionUtility
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
@@ -145,7 +143,7 @@ class RunTrackingService : LifecycleService() {
     }
 
     @Inject
-    lateinit var runTrackerDao: RunTrackerDao
+    lateinit var insertRunTrackerUseCase: InsertRunTrackerUseCase
 
     @Inject
     lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -295,9 +293,9 @@ class RunTrackingService : LifecycleService() {
         Timber.d("/// stopTracking")
         if (pathPoints.value.isNotEmpty()) {
             updateTrackingDatabase(
-                points = pathPoints.value,
-                runTime = runTime.value,
                 startTime = startTime,
+                runTime = runTime.value,
+                points = pathPoints.value,
             )
         }
         trackingState.value = TrackingState.STOPPED
@@ -360,24 +358,17 @@ class RunTrackingService : LifecycleService() {
     }
 
     private fun updateTrackingDatabase(
-        points: List<LatLng>,
+        startTime: Long,
         runTime: Long,
-        startTime: Long
+        points: List<LatLng>
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             Timber.d("/// updateTrackingDatabase: points=${points.size}")
-            val runTracker = RunTrackerEntity(
+            insertRunTrackerUseCase(
                 startTime = startTime,
-                endTime = System.currentTimeMillis(),
                 runTime = runTime,
-                points = points.map {
-                    PointEntity(
-                        latitude = it.latitude,
-                        longitude = it.longitude,
-                    )
-                },
+                points = points,
             )
-            runTrackerDao.insertRunTracker(runTracker)
         }
     }
 

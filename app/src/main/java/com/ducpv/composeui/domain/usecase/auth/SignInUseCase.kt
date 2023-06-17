@@ -1,7 +1,8 @@
-package com.ducpv.composeui.domain.usecase
+package com.ducpv.composeui.domain.usecase.auth
 
 import com.ducpv.composeui.core.util.AppDispatcher
-import com.ducpv.composeui.domain.repository.AuthRepository
+import com.ducpv.composeui.domain.datastore.AuthDataStore
+import com.ducpv.composeui.domain.datastore.toDataStoreUser
 import com.ducpv.composeui.domain.repository.FireStoreRepository
 import com.google.firebase.auth.FirebaseAuth
 import javax.inject.Inject
@@ -13,17 +14,17 @@ import kotlinx.coroutines.withContext
  */
 class SignInUseCase @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
-    private val authRepository: AuthRepository,
+    private val authDataStore: AuthDataStore,
     private val fireStoreRepository: FireStoreRepository,
     private val dispatcher: AppDispatcher,
 ) {
     suspend operator fun invoke(email: String, password: String) {
-        val authResult = firebaseAuth.signInWithEmailAndPassword(email, password).await()
-            ?: throw SignInException.FailedToSignIn
+        val authResult =
+            firebaseAuth.signInWithEmailAndPassword(email, password).await() ?: throw SignInException.FailedToSignIn
         val uid = authResult.user?.uid ?: throw SignInException.FailedToGetUserInfo
-        val userInfo = fireStoreRepository.getUserInfo(uid) ?: throw SignInException.FailedToGetUserInfo
+        val user = fireStoreRepository.getUser(uid) ?: throw SignInException.FailedToGetUserInfo
         withContext(dispatcher.io) {
-            authRepository.setUserInfo(userInfo)
+            authDataStore.setDataStoreUser(user.toDataStoreUser())
         }
     }
 

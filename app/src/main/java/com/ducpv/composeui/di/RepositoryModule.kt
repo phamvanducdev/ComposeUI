@@ -18,12 +18,12 @@ interface RepositoryModule {
     ): RunTrackerRepository
 
     @Binds
-    fun providesAuthRepository(
-        authRepository: AuthRepositoryImpl
-    ): AuthRepository
-
-    @Binds
     fun providesFireStoreRepository(
         fireStoreRepository: FireStoreRepositoryImpl
     ): FireStoreRepository
+
+    @Binds
+    fun providesStorageRepository(
+        fireStoreRepository: StorageRepositoryImpl
+    ): StorageRepository
 }

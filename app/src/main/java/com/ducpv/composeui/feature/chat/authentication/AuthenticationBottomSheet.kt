@@ -2,7 +2,6 @@ package com.ducpv.composeui.feature.chat.authentication
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -22,8 +21,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ducpv.composeui.R
-import com.ducpv.composeui.feature.tictactoegame.shapeBackground
 import com.ducpv.composeui.navigation.AppState
+import com.ducpv.composeui.shared.compose.ScreenStateOverlay
 import com.ducpv.composeui.shared.theme.AppTypography
 import com.ducpv.composeui.shared.theme.ThemeColor
 import com.ducpv.composeui.shared.theme.color
@@ -79,7 +78,7 @@ fun AuthenticationBottomSheet(
             textStyle = TextStyle(color = ThemeColor.Black.color),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done
+                imeAction = ImeAction.Done,
             ),
             keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
             visualTransformation = PasswordVisualTransformation(),
@@ -91,15 +90,13 @@ fun AuthenticationBottomSheet(
                     email = email,
                     password = password,
                     onSuccess = {
+                        viewModel.clearScreenState()
                         appState.navController.popBackStack()
                         when (viewModel.authenticationType) {
                             AuthenticationType.SIGN_IN -> appState.showSnackBarMessage(R.string.sign_in_success)
                             AuthenticationType.SIGN_UP -> appState.showSnackBarMessage(R.string.sign_up_success)
                         }
                     },
-                    onFailed = {
-                        appState.showSnackBarMessage(it)
-                    }
                 )
             },
             contentPadding = PaddingValues(horizontal = 12.dp),
@@ -111,4 +108,11 @@ fun AuthenticationBottomSheet(
             )
         }
     }
+
+    ScreenStateOverlay(
+        screenState = viewModel.screenState,
+        onDismiss = {
+            viewModel.clearScreenState()
+        },
+    )
 }

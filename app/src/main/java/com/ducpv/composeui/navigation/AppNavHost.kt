@@ -19,7 +19,7 @@ import com.google.accompanist.navigation.material.bottomSheet
  */
 @OptIn(
     ExperimentalAnimationApi::class,
-    ExperimentalMaterialNavigationApi::class
+    ExperimentalMaterialNavigationApi::class,
 )
 @Composable
 fun AppNavHost(appState: AppState) {
@@ -47,16 +47,16 @@ fun AppNavHost(appState: AppState) {
             route = NavGraphDestination.Chat.graphRoute,
             startDestination = NavGraphDestination.Chat.startRoute,
         ) {
-            composable(route = "chatRooms") {
+            composable(route = "rooms") {
                 ChatRoomsScreen(appState = appState)
             }
         }
         bottomSheet(
-            route = "authentication/{typeId}",
+            route = "authentication/{type}",
             arguments = listOf(
-                navArgument("typeId") {
+                navArgument("type") {
                     type = NavType.StringType
-                }
+                },
             ),
         ) {
             AuthenticationBottomSheet(appState = appState)

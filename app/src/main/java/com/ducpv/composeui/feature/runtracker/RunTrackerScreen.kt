@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ducpv.composeui.R
 import com.ducpv.composeui.domain.model.RunTracker
 import com.ducpv.composeui.domain.model.toLocation
@@ -58,11 +59,11 @@ fun RunTrackerScreen(
     val context: Context = LocalContext.current
     val screenWidthDp = LocalConfiguration.current.screenWidthDp
 
-    val currentLocation = viewModel.currentLocation.collectAsState()
-    val trackingState = viewModel.trackingState.collectAsState()
-    val pathPoints = viewModel.pathPoints.collectAsState()
-    val runTime = viewModel.runTime.collectAsState()
-    val runTrackerList = viewModel.runTrackerList.collectAsState()
+    val currentLocation by RunTrackingService.currentLocation.collectAsStateWithLifecycle()
+    val trackingState by RunTrackingService.trackingState.collectAsStateWithLifecycle()
+    val pathPoints by RunTrackingService.pathPoints.collectAsStateWithLifecycle()
+    val runTime by RunTrackingService.runTime.collectAsStateWithLifecycle()
+    val runTrackerList by viewModel.runTrackerList.collectAsStateWithLifecycle(initialValue = emptyList())
 
     val mapProperties by remember {
         mutableStateOf(MapProperties(mapType = MapType.NORMAL))
@@ -77,7 +78,7 @@ fun RunTrackerScreen(
     }
 
     val cameraPositionState = rememberCameraPositionState {
-        currentLocation.value?.let {
+        currentLocation?.let {
             position = CameraPosition.fromLatLngZoom(it, GoogleMapUtility.zoomSizeDefault)
         }
     }
@@ -93,16 +94,7 @@ fun RunTrackerScreen(
     )
 
     LaunchedEffect(Unit) {
-        if (permissionsState.allPermissionsGranted) {
-            RunTrackingService.onRequestCurrentLocation(context)
-        } else {
-            Timber.d("/// onLaunchMultiplePermissionRequest")
-            permissionsState.launchMultiplePermissionRequest()
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        viewModel.currentLocation.collect { currentLocation ->
+        RunTrackingService.currentLocation.collect { currentLocation ->
             if (currentLocation == null) return@collect
             cameraPositionState.animate(
                 update = CameraUpdateFactory.newCameraPosition(
@@ -119,6 +111,15 @@ fun RunTrackerScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        if (permissionsState.allPermissionsGranted) {
+            RunTrackingService.onRequestCurrentLocation(context)
+        } else {
+            Timber.d("/// onLaunchMultiplePermissionRequest")
+            permissionsState.launchMultiplePermissionRequest()
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
@@ -127,12 +128,12 @@ fun RunTrackerScreen(
             cameraPositionState = cameraPositionState,
         ) {
             Polyline(
-                points = pathPoints.value,
+                points = pathPoints,
                 color = ThemeColor.Red.color,
                 clickable = true,
                 width = 8f,
             )
-            currentLocation.value?.let { currentLocation ->
+            currentLocation?.let { currentLocation ->
                 Marker(
                     state = MarkerState(
                         position = currentLocation,
@@ -151,16 +152,16 @@ fun RunTrackerScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column {
-                    Text(text = "Lat: ${currentLocation.value?.latitude ?: "N/A"}")
-                    Text(text = "Lng: ${currentLocation.value?.longitude ?: "N/A"}")
-                    if (runTime.value > 0) {
-                        Text(text = runTime.value.millisecondToRunTimeFormat())
+                    Text(text = "Lat: ${currentLocation?.latitude ?: "N/A"}")
+                    Text(text = "Lng: ${currentLocation?.longitude ?: "N/A"}")
+                    if (runTime > 0) {
+                        Text(text = runTime.millisecondToRunTimeFormat())
                     }
                 }
 
                 Column {
                     Button(onClick = {
-                        when (trackingState.value) {
+                        when (trackingState) {
                             TrackingState.NONE,
                             TrackingState.STOPPED -> {
                                 RunTrackingService.onStartService(context)
@@ -173,9 +174,9 @@ fun RunTrackerScreen(
                             }
                         }
                     }) {
-                        Text(text = trackingState.value.actionName)
+                        Text(text = trackingState.actionName)
                     }
-                    if (trackingState.value == TrackingState.RUNNING) {
+                    if (trackingState == TrackingState.RUNNING) {
                         Button(onClick = {
                             RunTrackingService.onStopService(context)
                         }) {
@@ -203,7 +204,7 @@ fun RunTrackerScreen(
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter),
         ) {
-            if (runTrackerList.value.isNotEmpty()) {
+            if (runTrackerList.isNotEmpty()) {
                 val rowState = rememberLazyListState()
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -211,7 +212,7 @@ fun RunTrackerScreen(
                     contentPadding = PaddingValues(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    runTrackerList.value.forEach { runTracker ->
+                    runTrackerList.forEach { runTracker ->
                         item {
                             ItemRunTracker(
                                 runTracker = runTracker,
@@ -282,7 +283,7 @@ fun ItemRunTracker(
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
             runTracker.points.map { it.toLocation() }.lastOrNull() ?: LatLng(0.0, 0.0),
-            GoogleMapUtility.zoomSizeDefault * 1.2f
+            GoogleMapUtility.zoomSizeDefault * 1.2f,
         )
     }
 

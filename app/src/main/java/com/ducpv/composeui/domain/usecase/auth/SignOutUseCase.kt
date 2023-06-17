@@ -1,7 +1,7 @@
-package com.ducpv.composeui.domain.usecase
+package com.ducpv.composeui.domain.usecase.auth
 
 import com.ducpv.composeui.core.util.AppDispatcher
-import com.ducpv.composeui.domain.repository.AuthRepository
+import com.ducpv.composeui.domain.datastore.AuthDataStore
 import com.google.firebase.auth.FirebaseAuth
 import javax.inject.Inject
 import kotlinx.coroutines.withContext
@@ -11,13 +11,13 @@ import kotlinx.coroutines.withContext
  */
 class SignOutUseCase @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
-    private val authRepository: AuthRepository,
+    private val authDataStore: AuthDataStore,
     private val dispatcher: AppDispatcher,
 ) {
     suspend operator fun invoke() {
         firebaseAuth.signOut()
         withContext(dispatcher.io) {
-            authRepository.removeUserInfo()
+            authDataStore.clear()
         }
     }
 }

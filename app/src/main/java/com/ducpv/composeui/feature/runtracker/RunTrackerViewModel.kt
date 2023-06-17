@@ -3,13 +3,11 @@ package com.ducpv.composeui.feature.runtracker
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ducpv.composeui.domain.model.RunTracker
-import com.ducpv.composeui.domain.service.RunTrackingService
-import com.ducpv.composeui.domain.usecase.RunTrackerListUseCase
+import com.ducpv.composeui.domain.usecase.runtracker.SubscribeRunTrackerListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -17,19 +15,14 @@ import kotlinx.coroutines.launch
  */
 @HiltViewModel
 class RunTrackerViewModel @Inject constructor(
-    private val runTrackerListUseCase: RunTrackerListUseCase
+    private val subscribeRunTrackerListUseCase: SubscribeRunTrackerListUseCase
 ) : ViewModel() {
-    val currentLocation = RunTrackingService.currentLocation.asStateFlow()
-    val trackingState = RunTrackingService.trackingState.asStateFlow()
-    val pathPoints = RunTrackingService.pathPoints.asStateFlow()
-    val runTime = RunTrackingService.runTime.asStateFlow()
-
     private val _runTrackerList = MutableStateFlow<List<RunTracker>>(emptyList())
-    val runTrackerList: StateFlow<List<RunTracker>> = _runTrackerList.asStateFlow()
+    val runTrackerList: Flow<List<RunTracker>> = _runTrackerList
 
     init {
         viewModelScope.launch {
-            runTrackerListUseCase().collect { runTrackers ->
+            subscribeRunTrackerListUseCase().collect { runTrackers ->
                 _runTrackerList.value = runTrackers
             }
         }

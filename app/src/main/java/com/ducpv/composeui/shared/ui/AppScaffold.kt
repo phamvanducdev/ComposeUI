@@ -22,7 +22,7 @@ fun AppScaffold(
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
         topBar = {
-            TopAppBar(
+            AppTopBar(
                 title = topBarTitle,
                 navigationIcon = navigationIcon,
                 scrollBehavior = scrollBehavior,

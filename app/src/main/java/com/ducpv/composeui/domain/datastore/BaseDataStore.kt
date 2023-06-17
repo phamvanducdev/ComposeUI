@@ -54,4 +54,3 @@ abstract class BaseDataStore(val dataStore: DataStore<Preferences>) {
         }
     }
 }
-

@@ -11,7 +11,7 @@ import androidx.compose.ui.text.style.TextOverflow
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopAppBar(
+fun AppTopBar(
     title: Int? = null,
     navigationIcon: ImageVector? = null,
     scrollBehavior: TopAppBarScrollBehavior? = null,

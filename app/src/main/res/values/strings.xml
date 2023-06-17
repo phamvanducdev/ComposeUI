@@ -5,11 +5,19 @@
     <string name="chat">Chat</string>
     <string name="chat_rooms">Chat rooms</string>
     <string name="chat_detail">Chat detail</string>
+    <string name="password">Password</string>
+    <string name="email">Email</string>
     <string name="sign_in">Sign in</string>
     <string name="sign_up">Sign up</string>
     <string name="sign_in_success">Sign in success!</string>
     <string name="sign_up_success">Sign up success!</string>
-    <string name="password">Password</string>
-    <string name="email">Email</string>
     <string name="logout">Logout</string>
+    <string name="error">Error</string>
+    <string name="ok">OK</string>
+    <string name="update_image_avatar_success">Update image avatar success!</string>
+    <string name="now">Now</string>
+    <string name="seconds_format">%d seconds</string>
+    <string name="minutes_format">%d minutes</string>
+    <string name="hours_format">%d hours</string>
+    <string name="days_format">%d days</string>
 </resources>

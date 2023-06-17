@@ -132,7 +132,7 @@ enum class NavGraphDestination(
         icon = Icons.Default.Inbox,
         title = R.string.chat,
         graphRoute = "chatGraph",
-        startRoute = "chatRooms",
+        startRoute = "rooms",
     )
 }
 
@@ -143,7 +143,7 @@ enum class NavigationIcon(val icon: ImageVector) {
 
 @OptIn(
     ExperimentalAnimationApi::class,
-    ExperimentalMaterialNavigationApi::class
+    ExperimentalMaterialNavigationApi::class,
 )
 @Composable
 fun rememberAppState(

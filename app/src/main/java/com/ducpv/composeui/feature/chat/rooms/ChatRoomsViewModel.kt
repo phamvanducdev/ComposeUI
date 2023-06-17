@@ -1,108 +1,89 @@
 package com.ducpv.composeui.feature.chat.rooms
 
+import android.net.Uri
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ducpv.composeui.domain.datastore.AuthDataStore
-import com.ducpv.composeui.domain.model.ChatRoom
-import com.ducpv.composeui.domain.model.RoomType
-import com.ducpv.composeui.domain.model.UserInfo
-import com.ducpv.composeui.domain.usecase.ChatRoomListUseCase
-import com.ducpv.composeui.domain.usecase.SignInUseCase
-import com.ducpv.composeui.domain.usecase.SignOutUseCase
-import com.ducpv.composeui.domain.usecase.SignUpUseCase
+import com.ducpv.composeui.domain.datastore.toUser
+import com.ducpv.composeui.domain.model.chat.Room
+import com.ducpv.composeui.domain.model.chat.User
+import com.ducpv.composeui.domain.usecase.auth.SignOutUseCase
+import com.ducpv.composeui.domain.usecase.auth.UploadImageUserAvatarUseCase
+import com.ducpv.composeui.domain.usecase.chat.SubscribeRoomsUseCase
+import com.ducpv.composeui.domain.usecase.chat.SubscribeRoomsUseCase.Companion.SubscribeRoomsType
+import com.ducpv.composeui.shared.state.ScreenState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
  * Created by pvduc9773 on 23/05/2023.
  */
-data class UiState(
-    val userInfo: UserInfo? = null,
-    val chatRooms: List<ChatRoom> = emptyList()
-)
-
 @HiltViewModel
 class ChatRoomsViewModel @Inject constructor(
     private val authDataStore: AuthDataStore,
-    private val signUpUseCase: SignUpUseCase,
-    private val signInUseCase: SignInUseCase,
     private val signOutUseCase: SignOutUseCase,
-    private val chatRoomsUserCase: ChatRoomListUseCase,
+    private val subscribeRoomsUseCase: SubscribeRoomsUseCase,
+    private val uploadImageUserAvatarUseCase: UploadImageUserAvatarUseCase,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(UiState())
-    val uiState: StateFlow<UiState> = _uiState
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = UiState(),
-        )
+    val screenState = mutableStateOf<ScreenState>(ScreenState.Idle)
 
-    private var fetchChatRoomsJob: Job? = null
+    val roomList: Flow<List<Room>> = subscribeRoomsUseCase.subscribeRooms
+    val userInfo: Flow<User?> = authDataStore.subscribeUser.map { dataStoreUser ->
+        dataStoreUser?.toUser()
+    }
 
     init {
         viewModelScope.launch {
-            authDataStore.userInfo
+            authDataStore.subscribeUser
                 .distinctUntilChanged()
-                .collect { userInfo ->
-                    _uiState.update { state ->
-                        state.copy(userInfo = userInfo)
+                .collect { dataStoreUser ->
+                    if (dataStoreUser != null) {
+                        subscribeRoomsUseCase.startSubscribeRooms(SubscribeRoomsType.All)
+                    } else {
+                        subscribeRoomsUseCase.removeSubscribeRooms()
                     }
-                    fetchChatRooms()
                 }
         }
     }
 
-    private fun fetchChatRooms() {
-        val previousJob = fetchChatRoomsJob
-        fetchChatRoomsJob = viewModelScope.launch {
-            previousJob?.cancelAndJoin()
-            chatRoomsUserCase.invoke(roomType = RoomType.PUBLIC).collect { chatRooms ->
-                _uiState.update { state ->
-                    state.copy(chatRooms = chatRooms)
-                }
-            }
-        }
+    fun onJoinRoom(rid: String) {
+        // TODO
     }
 
-    fun onSignUp(
-        email: String,
-        password: String,
-        onSuccess: () -> Unit,
-        onFailed: (String) -> Unit,
+    fun onChangeImage(
+        imageUri: Uri?,
+        onSuccess: () -> Unit
     ) {
+        if (imageUri == null) {
+            screenState.value = ScreenState.Failed(
+                Exception("Not found image info!").message.toString(),
+            )
+            return
+        }
         viewModelScope.launch {
             try {
-                signUpUseCase.invoke(email, password)
+                screenState.value = ScreenState.Progressing
+                uploadImageUserAvatarUseCase(imageUri = imageUri)
                 onSuccess.invoke()
             } catch (e: Exception) {
-                onFailed.invoke(e.message.toString())
+                screenState.value = ScreenState.Failed(e.message.toString())
             }
         }
     }
 
-    fun onSignIn(
-        email: String,
-        password: String,
-        onSuccess: () -> Unit,
-        onFailed: (String) -> Unit,
-    ) {
+    fun onLogout(onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
-            try {
-                signInUseCase.invoke(email, password)
-                onSuccess.invoke()
-            } catch (e: Exception) {
-                onFailed.invoke(e.message.toString())
-            }
+            signOutUseCase()
+            onSuccess.invoke()
         }
     }
 
-    fun onLogout() {
-        viewModelScope.launch {
-            signOutUseCase.invoke()
-        }
+    fun clearScreenState() {
+        screenState.value = ScreenState.Idle
     }
 }

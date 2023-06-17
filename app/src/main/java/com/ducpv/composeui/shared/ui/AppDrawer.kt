@@ -13,7 +13,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.compose.currentBackStackEntryAsState
 import com.ducpv.composeui.R
 import com.ducpv.composeui.navigation.NavGraphDestination
 import com.ducpv.composeui.shared.theme.ThemeColor
