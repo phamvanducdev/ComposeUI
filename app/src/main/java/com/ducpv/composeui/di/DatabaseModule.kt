@@ -15,7 +15,7 @@ import javax.inject.Singleton
  */
 @Module
 @InstallIn(SingletonComponent::class)
-class AppDatabaseModule {
+class DatabaseModule {
     @Singleton
     @Provides
     fun providesRunTrackerDatabase(@ApplicationContext context: Context): RunTrackerDatabase =

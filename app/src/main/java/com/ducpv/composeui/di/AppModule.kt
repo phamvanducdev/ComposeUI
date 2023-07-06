@@ -2,6 +2,8 @@ package com.ducpv.composeui.di
 
 import com.ducpv.composeui.BuildConfig
 import com.ducpv.composeui.core.util.AppConfig
+import com.ducpv.composeui.core.util.AppDispatcher
+import com.ducpv.composeui.core.util.AppDispatcherImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -13,12 +15,15 @@ import javax.inject.Singleton
  */
 @Module
 @InstallIn(SingletonComponent::class)
-class UtilModule {
-    @Singleton
+class AppModule {
     @Provides
-    fun provideAppConfig(): AppConfig =
-        AppConfig(
-            BuildConfig.VERSION_CODE,
-            BuildConfig.VERSION_NAME,
-        )
+    @Singleton
+    fun provideAppConfig(): AppConfig = AppConfig(
+        BuildConfig.VERSION_CODE,
+        BuildConfig.VERSION_NAME,
+    )
+
+    @Provides
+    @Singleton
+    fun provideAppDispatcher(): AppDispatcher = AppDispatcherImpl()
 }
