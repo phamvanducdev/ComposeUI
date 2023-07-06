@@ -11,7 +11,7 @@ import java.util.*
 /**
  * Created by pvduc9773 on 10/06/2023.
  */
-class FireStoreRoom(
+data class FireStoreRoom(
     @DocumentId val rid: String = "",
     val name: String = "",
     val type: String = "",

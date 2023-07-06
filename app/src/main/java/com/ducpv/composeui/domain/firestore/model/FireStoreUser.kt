@@ -8,7 +8,7 @@ import java.util.*
 /**
  * Created by pvduc9773 on 10/06/2023.
  */
-class FireStoreUser(
+data class FireStoreUser(
     @DocumentId val uid: String = "",
     val email: String = "",
     val name: String? = null,

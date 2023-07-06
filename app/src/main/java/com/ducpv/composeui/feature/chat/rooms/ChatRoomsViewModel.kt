@@ -51,10 +51,6 @@ class ChatRoomsViewModel @Inject constructor(
         }
     }
 
-    fun onJoinRoom(rid: String) {
-        // TODO
-    }
-
     fun onChangeImage(
         imageUri: Uri?,
         onSuccess: () -> Unit

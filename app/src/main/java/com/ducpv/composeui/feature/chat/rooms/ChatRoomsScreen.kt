@@ -4,6 +4,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -47,10 +50,8 @@ fun ChatRoomsScreen(
     appState: AppState,
     viewModel: ChatRoomsViewModel = hiltViewModel()
 ) {
-    LaunchedEffect(Unit) {
-        appState.topBarTitle = R.string.chat_rooms
-        appState.navigationIcon = NavigationIcon.Menu
-    }
+    val user: User? by viewModel.userInfo.collectAsStateWithLifecycle(initialValue = null)
+    val roomList: List<Room> by viewModel.roomList.collectAsStateWithLifecycle(initialValue = emptyList())
 
     val singlePhotoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
@@ -65,43 +66,37 @@ fun ChatRoomsScreen(
         },
     )
 
-    val user: User? by viewModel.userInfo.collectAsStateWithLifecycle(initialValue = null)
-    val roomList: List<Room> by viewModel.roomList.collectAsStateWithLifecycle(initialValue = emptyList())
+    LaunchedEffect(Unit) {
+        appState.topBarTitle = appState.appContext.getString(R.string.chat_rooms)
+        appState.navigationIcon = NavigationIcon.Menu
+    }
 
     LazyColumn(modifier = Modifier.fillMaxSize()) {
-        userInfoItem(
+        authorItem(
             user = user,
+            onSignIn = {
+                appState.navController.navigate("app/authentication/signIn")
+            },
+            onSignUp = {
+                appState.navController.navigate("app/authentication/signUp")
+            },
             onLogout = {
                 viewModel.onLogout {
-                    appState.navController.navigate("authentication/signIn")
+                    appState.navController.navigate("app/authentication/signIn")
                 }
             },
             onChangeImage = {
                 singlePhotoPickerLauncher.launch(
-                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo),
                 )
             },
         )
-        roomListItem(
+        roomItems(
             roomList = roomList,
-            onJoinRoom = viewModel::onJoinRoom,
+            onJoinRoom = { rid ->
+                appState.navController.navigate("app/chat/detail/$rid")
+            },
         )
-    }
-
-    if (user == null) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Button(onClick = { appState.navController.navigate("authentication/signIn") }) {
-                Text(text = stringResource(R.string.sign_in))
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { appState.navController.navigate("authentication/signUp") }) {
-                Text(text = stringResource(R.string.sign_up))
-            }
-        }
     }
 
     ScreenStateOverlay(
@@ -112,16 +107,135 @@ fun ChatRoomsScreen(
     )
 }
 
-fun LazyListScope.userInfoItem(
-    user: User?,
+fun LazyListScope.authorItem(
+    user: User? = null,
+    onSignIn: () -> Unit,
+    onSignUp: () -> Unit,
     onLogout: () -> Unit,
     onChangeImage: () -> Unit,
 ) {
-    if (user == null) return
-    item {
+    if (user != null) {
+        item {
+            ItemAuthor(
+                user = user,
+                onLogout = onLogout,
+                onChangeImage = onChangeImage,
+            )
+        }
+    } else {
+        item {
+            ItemAuthentication(
+                onSignIn = onSignIn,
+                onSignUp = onSignUp,
+            )
+        }
+    }
+}
+
+fun LazyListScope.roomItems(
+    roomList: List<Room>,
+    onJoinRoom: (rid: String) -> Unit,
+) {
+    for (room in roomList) {
+        item {
+            ItemRoom(
+                room = room,
+                onItemClickListener = onJoinRoom,
+            )
+        }
+    }
+}
+
+@Composable
+fun ItemAuthor(
+    user: User,
+    onLogout: () -> Unit,
+    onChangeImage: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(42.dp)
+                .clip(CircleShape)
+                .background(ThemeColor.Gray.color.alpha10)
+                .clickable { onChangeImage.invoke() },
+        ) {
+            AsyncImage(
+                modifier = Modifier
+                    .border(1.dp, ThemeColor.Blue.color, CircleShape)
+                    .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
+                    .clip(CircleShape),
+                model = user.avatar,
+                contentScale = ContentScale.Crop,
+                contentDescription = null,
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Column(
+            modifier = Modifier.weight(1f),
+        ) {
+            Text(
+                text = user.name.orEmpty(),
+                color = ThemeColor.Black.color,
+                fontSize = 14.sp,
+            )
+            Text(
+                text = user.email,
+                color = ThemeColor.Gray.color,
+                fontSize = 10.sp,
+            )
+        }
+        Button(
+            onClick = onLogout,
+            modifier = Modifier.size(32.dp),
+            contentPadding = PaddingValues(horizontal = 0.dp),
+        ) {
+            Icon(
+                modifier = Modifier.size(16.dp),
+                imageVector = Icons.Default.Logout,
+                contentDescription = null,
+            )
+        }
+    }
+}
+
+@Composable
+fun ItemAuthentication(
+    onSignIn: () -> Unit,
+    onSignUp: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Button(onClick = onSignIn) {
+            Text(text = stringResource(R.string.sign_in))
+        }
+        Button(onClick = onSignUp) {
+            Text(text = stringResource(R.string.sign_up))
+        }
+    }
+}
+
+@Composable
+fun ItemRoom(
+    room: Room,
+    onItemClickListener: (String) -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onItemClickListener.invoke(room.rid) },
+    ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -129,11 +243,10 @@ fun LazyListScope.userInfoItem(
                 modifier = Modifier
                     .size(42.dp)
                     .clip(CircleShape)
-                    .background(ThemeColor.Gray.color.alpha10)
-                    .clickable { onChangeImage.invoke() },
+                    .background(ThemeColor.Gray.color.alpha10),
             ) {
                 AsyncImage(
-                    model = user.avatar,
+                    model = room.avatar,
                     contentScale = ContentScale.Crop,
                     contentDescription = null,
                 )
@@ -142,91 +255,32 @@ fun LazyListScope.userInfoItem(
             Column(
                 modifier = Modifier.weight(1f),
             ) {
-                Text(
-                    text = user.name.orEmpty(),
-                    color = ThemeColor.Black.color,
-                    fontSize = 14.sp,
-                )
-                Text(
-                    text = user.email,
-                    color = ThemeColor.Gray.color,
-                    fontSize = 10.sp,
-                )
-            }
-            Button(
-                onClick = onLogout,
-                modifier = Modifier.size(32.dp),
-                contentPadding = PaddingValues(horizontal = 0.dp),
-            ) {
-                Icon(
-                    modifier = Modifier.size(16.dp),
-                    imageVector = Icons.Default.Logout,
-                    contentDescription = null,
-                )
-            }
-        }
-    }
-}
-
-fun LazyListScope.roomListItem(
-    roomList: List<Room>,
-    onJoinRoom: (rid: String) -> Unit
-) {
-    for (room in roomList) {
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onJoinRoom.invoke(room.rid) },
-            ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .background(ThemeColor.Gray.color.alpha10),
-                    ) {
-                        AsyncImage(
-                            model = room.avatar,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = null,
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column(
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = room.name,
-                                color = ThemeColor.Black.color,
-                                fontSize = 14.sp,
-                            )
-                            room.newestMessage?.createdAt?.let { createdAt ->
-                                Text(
-                                    text = createdAt.toFormattedDurationTime(LocalContext.current),
-                                    color = ThemeColor.Gray.color,
-                                    fontSize = 8.sp,
-                                )
-                            }
-                        }
+                    Text(
+                        text = room.name,
+                        color = ThemeColor.Black.color,
+                        fontSize = 14.sp,
+                    )
+                    room.newestMessage?.createdAt?.let { createdAt ->
                         Text(
-                            text = room.newestMessage?.content
-                                ?: room.createdAt.toFormattedDurationTime(LocalContext.current),
+                            text = createdAt.toFormattedDurationTime(LocalContext.current),
                             color = ThemeColor.Gray.color,
-                            fontSize = 10.sp,
+                            fontSize = 8.sp,
                         )
                     }
                 }
+                Text(
+                    text = room.newestMessage?.content
+                        ?: room.createdAt.toFormattedDurationTime(LocalContext.current),
+                    color = ThemeColor.Gray.color,
+                    fontSize = 10.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }

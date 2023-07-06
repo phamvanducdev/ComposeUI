@@ -1,17 +1,15 @@
 package com.ducpv.composeui.domain.usecase.chat
 
 import com.ducpv.composeui.core.util.AppDispatcher
+import com.ducpv.composeui.domain.firestore.model.toRoom
 import com.ducpv.composeui.domain.model.chat.Room
 import com.ducpv.composeui.domain.model.chat.RoomType
 import com.ducpv.composeui.domain.repository.FireStoreRepository
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 
 /**
  * Created by pvduc9773 on 15/05/2023.
@@ -47,15 +45,18 @@ class SubscribeRoomsUseCase @Inject constructor(
     fun startSubscribeRooms(type: SubscribeRoomsType, limit: Long = 100L) {
         subscribeRoomsScope = CoroutineScope(SupervisorJob() + dispatcher.io)
         subscribeRoomsScope?.launch {
-            fireStoreRepository.subscribeRooms(type.getTypes(), limit).collect {
-                _subscribeRooms.emit(it)
+            fireStoreRepository.subscribeRooms(type.getTypes(), limit).collect { fireStoreRooms ->
+                _subscribeRooms.emit(
+                    fireStoreRooms.map { it.toRoom() },
+                )
             }
         }
     }
 
-    suspend fun removeSubscribeRooms() {
-        subscribeRoomsScope?.cancel()
-        subscribeRoomsScope = null
-        _subscribeRooms.emit(emptyList())
+    fun removeSubscribeRooms() {
+        subscribeRoomsScope?.launch {
+            _subscribeRooms.emit(emptyList())
+            cancel()
+        }
     }
 }

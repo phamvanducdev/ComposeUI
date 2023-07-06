@@ -16,14 +16,6 @@ fun String.toDate(pattern: String): Date = try {
     throw DateTimeFormatException(e)
 }
 
-fun String.toDateUTC(pattern: String): Date = try {
-    SimpleDateFormat(pattern, Locale.getDefault()).apply {
-        this.timeZone = TimeZone.getTimeZone("GMT")
-    }.parse(this) ?: throw DateTimeFormatException()
-} catch (e: Exception) {
-    throw DateTimeFormatException(e)
-}
-
 fun Date.toFormattedString(pattern: String): String = try {
     SimpleDateFormat(pattern, Locale.getDefault()).format(this)
 } catch (e: Exception) {
@@ -31,7 +23,9 @@ fun Date.toFormattedString(pattern: String): String = try {
 }
 
 enum class ModifiedUnit {
-    DAY_OF_MONTH, HOUR_OF_DAY, MINUTE
+    DAY_OF_MONTH,
+    HOUR_OF_DAY,
+    MINUTE,
 }
 
 fun Date.modified(value: Int, unit: ModifiedUnit): Date {
@@ -57,25 +51,70 @@ fun Date.modified(value: Int, unit: ModifiedUnit): Date {
     }
 }
 
-fun Date.toFormattedDurationTime(context: Context): String {
+fun Date.toFormattedDurationDateTime(context: Context): String {
+    val fromCalendar = Calendar.getInstance().apply { time = this@toFormattedDurationDateTime }
+    val toCalendar = Calendar.getInstance().apply { time = Date() }
+    return when {
+        fromCalendar.get(Calendar.YEAR) != toCalendar.get(Calendar.YEAR) -> {
+            this.toFormattedString("dd/MM/YYYY")
+        }
+        fromCalendar.get(Calendar.MONTH) != toCalendar.get(Calendar.MONTH) -> {
+            this.toFormattedString("dd/MM")
+        }
+        fromCalendar.get(Calendar.WEEK_OF_MONTH) != toCalendar.get(Calendar.WEEK_OF_MONTH) -> {
+            this.toFormattedString("dd/MM")
+        }
+        fromCalendar.get(Calendar.DAY_OF_WEEK) != toCalendar.get(Calendar.DAY_OF_WEEK) -> {
+            this.toFormattedString("EEEE")
+        }
+        else -> {
+            context.getString(R.string.today)
+        }
+    }
+}
+
+fun Date.toFormattedDurationDayTime(context: Context): String {
     val fromDate = this
-    val toDate = Date()
+    val toDate = Date() // Current time
     val durationMills = (toDate.time - fromDate.time)
     return when {
         durationMills < 1_000L -> { // < 1 second -> "Now"
             context.getString(R.string.now)
         }
         durationMills in 1_000L..60_000L -> { // < 1 minutes -> "xxx seconds"
-            context.getString(R.string.seconds_format, durationMills / 1_000L)
+            context.getString(R.string.seconds_format_ago, durationMills / 1_000L)
         }
         durationMills in 60_000L..60 * 60_000L -> { // < 1 hours -> "xxx minutes"
-            context.getString(R.string.minutes_format, durationMills / 60_000L)
+            context.getString(R.string.minutes_format_ago, durationMills / 60_000L)
         }
         durationMills in 60 * 60_000L..24 * 60 * 60_000L -> { // < 1 days -> "xxx hours"
-            context.getString(R.string.hours_format, durationMills / (60 * 60_000L))
+            context.getString(R.string.hours_format_ago, durationMills / (60 * 60_000L))
+        }
+        else -> {
+            this.toFormattedString("HH:mm")
+        }
+    }
+}
+
+fun Date.toFormattedDurationTime(context: Context): String {
+    val fromDate = this
+    val toDate = Date() // Current time
+    val durationMills = (toDate.time - fromDate.time)
+    return when {
+        durationMills < 1_000L -> { // < 1 second -> "Now"
+            context.getString(R.string.now)
+        }
+        durationMills in 1_000L..60_000L -> { // < 1 minutes -> "xxx seconds"
+            context.getString(R.string.seconds_format_ago, durationMills / 1_000L)
+        }
+        durationMills in 60_000L..60 * 60_000L -> { // < 1 hours -> "xxx minutes"
+            context.getString(R.string.minutes_format_ago, durationMills / 60_000L)
+        }
+        durationMills in 60 * 60_000L..24 * 60 * 60_000L -> { // < 1 days -> "xxx hours"
+            context.getString(R.string.hours_format_ago, durationMills / (60 * 60_000L))
         }
         durationMills in 24 * 60 * 60_000L..7 * 24 * 60 * 60_000L -> { // < 7 days -> "xxx days"
-            context.getString(R.string.days_format, durationMills / (24 * 60 * 60_000L))
+            context.getString(R.string.days_format_ago, durationMills / (24 * 60 * 60_000L))
         }
         else -> {
             val fromCalendar = Calendar.getInstance().apply { time = fromDate }

@@ -27,13 +27,3 @@ fun FireStoreMessage.toMessage(): Message =
         type = MessageType.convertBy(type),
         createdAt = createdAt ?: Date(),
     )
-
-fun Message.toFireStoreMessage(): FireStoreMessage =
-    FireStoreMessage(
-        mid = mid,
-        uid = uid,
-        rid = rid,
-        content = content,
-        type = type.value,
-        createdAt = createdAt,
-    )

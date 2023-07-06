@@ -26,7 +26,7 @@ fun TicTacToeGameScreen(
     viewModel: GameViewModel = hiltViewModel()
 ) {
     LaunchedEffect(Unit) {
-        appState.topBarTitle = R.string.tic_tac_toe_game
+        appState.topBarTitle = appState.appContext.getString(R.string.tic_tac_toe_game)
         appState.navigationIcon = NavigationIcon.Menu
     }
 

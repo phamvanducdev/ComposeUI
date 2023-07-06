@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.ducpv.composeui.feature.chat.authentication.AuthenticationBottomSheet
+import com.ducpv.composeui.feature.chat.detail.ChatDetailScreen
 import com.ducpv.composeui.feature.chat.rooms.ChatRoomsScreen
 import com.ducpv.composeui.feature.runtracker.RunTrackerScreen
 import com.ducpv.composeui.feature.tictactoegame.TicTacToeGameScreen
@@ -31,7 +32,7 @@ fun AppNavHost(appState: AppState) {
             route = NavGraphDestination.TicTacToeGame.graphRoute,
             startDestination = NavGraphDestination.TicTacToeGame.startRoute,
         ) {
-            composable(route = "ticTacToe") {
+            composable(route = "game/ticTacToe") {
                 TicTacToeGameScreen(appState = appState)
             }
         }
@@ -39,7 +40,7 @@ fun AppNavHost(appState: AppState) {
             route = NavGraphDestination.RunTracker.graphRoute,
             startDestination = NavGraphDestination.RunTracker.startRoute,
         ) {
-            composable(route = "runTracker") {
+            composable(route = "app/runTracker") {
                 RunTrackerScreen(appState = appState)
             }
         }
@@ -47,12 +48,22 @@ fun AppNavHost(appState: AppState) {
             route = NavGraphDestination.Chat.graphRoute,
             startDestination = NavGraphDestination.Chat.startRoute,
         ) {
-            composable(route = "rooms") {
+            composable(route = "app/chat/rooms") {
                 ChatRoomsScreen(appState = appState)
+            }
+            composable(
+                route = "app/chat/detail/{rid}",
+                arguments = listOf(
+                    navArgument("rid") {
+                        type = NavType.StringType
+                    },
+                ),
+            ) {
+                ChatDetailScreen(appState = appState)
             }
         }
         bottomSheet(
-            route = "authentication/{type}",
+            route = "app/authentication/{type}",
             arguments = listOf(
                 navArgument("type") {
                     type = NavType.StringType

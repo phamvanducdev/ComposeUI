@@ -52,7 +52,7 @@ fun RunTrackerScreen(
     viewModel: RunTrackerViewModel = hiltViewModel()
 ) {
     LaunchedEffect(Unit) {
-        appState.topBarTitle = R.string.run_tracker
+        appState.topBarTitle = appState.appContext.getString(R.string.run_tracker)
         appState.navigationIcon = NavigationIcon.Menu
     }
 

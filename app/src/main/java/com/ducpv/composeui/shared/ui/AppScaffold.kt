@@ -13,7 +13,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppScaffold(
-    topBarTitle: Int? = null,
+    topBarTitle: String? = null,
     navigationIcon: ImageVector? = null,
     snackHostState: SnackbarHostState,
     onNavigationClick: () -> Unit = {},

@@ -3,6 +3,7 @@ package com.ducpv.composeui.domain.usecase.auth
 import com.ducpv.composeui.core.util.AppDispatcher
 import com.ducpv.composeui.domain.datastore.AuthDataStore
 import com.ducpv.composeui.domain.datastore.toDataStoreUser
+import com.ducpv.composeui.domain.firestore.model.toUser
 import com.ducpv.composeui.domain.repository.FireStoreRepository
 import com.google.firebase.auth.FirebaseAuth
 import javax.inject.Inject
@@ -22,7 +23,7 @@ class SignInUseCase @Inject constructor(
         val authResult =
             firebaseAuth.signInWithEmailAndPassword(email, password).await() ?: throw SignInException.FailedToSignIn
         val uid = authResult.user?.uid ?: throw SignInException.FailedToGetUserInfo
-        val user = fireStoreRepository.getUser(uid) ?: throw SignInException.FailedToGetUserInfo
+        val user = fireStoreRepository.getUser(uid)?.toUser() ?: throw SignInException.FailedToGetUserInfo
         withContext(dispatcher.io) {
             authDataStore.setDataStoreUser(user.toDataStoreUser())
         }

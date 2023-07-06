@@ -4,6 +4,7 @@ import com.ducpv.composeui.core.util.AppDispatcher
 import com.ducpv.composeui.domain.datastore.AuthDataStore
 import com.ducpv.composeui.domain.datastore.toDataStoreUser
 import com.ducpv.composeui.domain.firestore.model.FireStoreUser
+import com.ducpv.composeui.domain.firestore.model.toUser
 import com.ducpv.composeui.domain.repository.FireStoreRepository
 import com.google.firebase.auth.FirebaseAuth
 import java.util.*
@@ -34,7 +35,7 @@ class SignUpUseCase @Inject constructor(
                 updatedAt = Date(),
             ),
         )
-        val user = fireStoreRepository.getUser(firebaseUser.uid) ?: throw SignUpException.FailedToGetUserInfo
+        val user = fireStoreRepository.getUser(firebaseUser.uid)?.toUser() ?: throw SignUpException.FailedToGetUserInfo
         withContext(dispatcher.io) {
             authDataStore.setDataStoreUser(user.toDataStoreUser())
         }

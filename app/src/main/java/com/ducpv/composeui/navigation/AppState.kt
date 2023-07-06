@@ -32,7 +32,7 @@ class AppState(
     val navController: NavHostController,
     val bottomSheetNavigator: BottomSheetNavigator
 ) {
-    var topBarTitle: Int? by mutableStateOf(null)
+    var topBarTitle: String? by mutableStateOf(null)
 
     var navigationIcon: NavigationIcon? by mutableStateOf(null)
 
@@ -114,31 +114,31 @@ enum class NavGraphDestination(
     val icon: ImageVector,
     val title: Int,
     val graphRoute: String,
-    val startRoute: String
+    val startRoute: String,
 ) {
     TicTacToeGame(
         icon = Icons.Default.Gamepad,
         title = R.string.tic_tac_toe_game,
         graphRoute = "ticTacToeGraph",
-        startRoute = "ticTacToe",
+        startRoute = "game/ticTacToe",
     ),
     RunTracker(
         icon = Icons.Default.DirectionsRun,
         title = R.string.run_tracker,
         graphRoute = "runTrackerGraph",
-        startRoute = "runTracker",
+        startRoute = "app/runTracker",
     ),
     Chat(
         icon = Icons.Default.Inbox,
         title = R.string.chat,
         graphRoute = "chatGraph",
-        startRoute = "rooms",
+        startRoute = "app/chat/rooms",
     )
 }
 
 enum class NavigationIcon(val icon: ImageVector) {
     Menu(Icons.Default.Menu),
-    Back(Icons.Default.ArrowBack)
+    Back(Icons.Default.ArrowBack),
 }
 
 @OptIn(
