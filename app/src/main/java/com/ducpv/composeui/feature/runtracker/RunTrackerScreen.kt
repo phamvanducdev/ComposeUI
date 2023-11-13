@@ -156,9 +156,11 @@ fun RunTrackerScreen(
                             TrackingState.STOPPED -> {
                                 RunTrackingService.onStartService(context)
                             }
+
                             TrackingState.PAUSED -> {
                                 RunTrackingService.onResumeService(context)
                             }
+
                             TrackingState.RUNNING -> {
                                 RunTrackingService.onPauseService(context)
                             }
@@ -273,7 +275,7 @@ fun ItemRunTracker(
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
             runTracker.points.map { it.toLocation() }.lastOrNull() ?: LatLng(0.0, 0.0),
-            GoogleMapUtility.zoomSizeDefault * 1.2f
+            GoogleMapUtility.zoomSizeDefault * 1.2f,
         )
     }
 
