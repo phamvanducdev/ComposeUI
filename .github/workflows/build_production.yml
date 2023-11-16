@@ -92,7 +92,7 @@ jobs:
 
   build-and-deploy-production-app:
     name: Build & Deploy Production App
-    needs: [ setup, ktLint, unitTest ]
+    needs: [ setup, ktLint, unitTest, tagging ]
     runs-on: ubuntu-latest
     with:
       tag: ${{ needs.tagging.outputs.new_tag }}
