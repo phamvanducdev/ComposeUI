@@ -50,8 +50,7 @@ object ServiceModule {
     ): NotificationCompat.Builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
         .setAutoCancel(false)
         .setOngoing(true)
-        .setSmallIcon(R.drawable.ic_logo)
+        .setSmallIcon(R.drawable.ic_source_code)
         .setContentTitle(context.getString(R.string.run_tracker))
-        .setContentText("00:00:00")
         .setContentIntent(mainActivityPendingIntent)
 }

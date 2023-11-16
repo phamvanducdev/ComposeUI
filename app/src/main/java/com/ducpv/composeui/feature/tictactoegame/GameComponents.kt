@@ -1,10 +1,11 @@
 package com.ducpv.composeui.feature.tictactoegame
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -21,6 +22,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -34,7 +37,7 @@ import com.ducpv.composeui.shared.theme.color
  */
 @Preview(showBackground = true)
 @Composable
-fun GameBoardPreview() {
+fun GameBoardViewPreview() {
     val cellItems = mutableMapOf(
         1 to Cell.CIRCLE,
         2 to Cell.CROSS,
@@ -49,45 +52,13 @@ fun GameBoardPreview() {
 
     ComposeUITheme {
         Box {
-            GameBoard()
-            LazyVerticalGrid(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .padding(20.dp),
-                columns = GridCells.Fixed(3),
-            ) {
-                cellItems.forEach { (cellNo, _) ->
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            when (cellItems[cellNo]) {
-                                Cell.CIRCLE -> CircleCell()
-                                Cell.CROSS -> CrossCell()
-                                else -> Unit
-                            }
-                        }
-                    }
-                }
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                DrawVictoryLine(
-                    victoryType = VictoryType.VERTICAL1,
-                    victoryPlayer = Player.CIRCLE,
-                )
-            }
+            GameBoardView()
+            GameCellsView(cells = cellItems)
+            GameWinnerView(
+                isGameOver = true,
+                winnerType = WinnerType.VERTICAL1,
+                winnerPlayer = Player.CIRCLE,
+            )
         }
     }
 }
@@ -96,12 +67,7 @@ fun GameBoardPreview() {
 @Composable
 fun GameActionCircleTurnPreview() {
     ComposeUITheme {
-        GameAction(
-            state = GameState.CIRCLE_TURN,
-            action = {
-                // @null
-            },
-        )
+        GameActionView(state = GameState.CIRCLE_TURN)
     }
 }
 
@@ -109,12 +75,7 @@ fun GameActionCircleTurnPreview() {
 @Composable
 fun GameActionCrossTurnPreview() {
     ComposeUITheme {
-        GameAction(
-            state = GameState.CROSS_TURN,
-            action = {
-                // @null
-            },
-        )
+        GameActionView(state = GameState.CROSS_TURN)
     }
 }
 
@@ -135,7 +96,44 @@ fun ItemCrossPreview() {
 }
 
 @Composable
-fun GameBoard() {
+fun GameHeaderView(
+    isGameOver: Boolean,
+    winnerType: WinnerType,
+    currentPlayer: Player?,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(42.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AnimatedVisibility(
+            visible = isGameOver,
+            enter = fadeIn(tween(600)),
+            exit = fadeOut(tween(0)),
+        ) {
+            val winnerDisplayName = when (winnerType) {
+                WinnerType.DRAW -> "Game draw!"
+                else -> "${currentPlayer?.displayName} winner!"
+            }
+            val winnerDisplayColor = when (winnerType) {
+                WinnerType.DRAW -> ThemeColor.Pink.color
+                else -> currentPlayer?.displayColor ?: ThemeColor.Pink.color
+            }
+            Text(
+                modifier = Modifier.fillMaxSize(),
+                textAlign = TextAlign.Center,
+                text = winnerDisplayName,
+                color = winnerDisplayColor,
+                fontSize = 24.sp,
+                fontFamily = FontFamily.Monospace,
+            )
+        }
+    }
+}
+
+@Composable
+fun GameBoardView() {
     val drawLineColor = ThemeColor.Gray.color
     Canvas(
         modifier = Modifier
@@ -171,6 +169,95 @@ fun GameBoard() {
             start = Offset(x = 0f, y = size.height * 2 / 3),
             end = Offset(x = size.width, y = size.height * 2 / 3),
         )
+    }
+}
+
+@Composable
+fun GameCellsView(
+    cells: Map<Int, Cell>,
+    onCellSelected: (Int) -> Unit = {}
+) {
+    LazyVerticalGrid(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .padding(20.dp),
+        columns = GridCells.Fixed(3),
+    ) {
+        cells.forEach { (cellNo, cell) ->
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                        .clickable(
+                            indication = null,
+                            interactionSource = MutableInteractionSource(),
+                            onClickLabel = cellNo.toString(),
+                            onClick = { onCellSelected.invoke(cellNo) },
+                        ),
+                ) {
+                    GameCellView(cell = cell)
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun GameCellView(cell: Cell) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        AnimatedVisibility(
+            visible = cell != Cell.NONE,
+            enter = scaleIn(tween(600)),
+            exit = scaleOut(tween(600)),
+        ) {
+            when (cell) {
+                Cell.CIRCLE -> CircleCell()
+                Cell.CROSS -> CrossCell()
+                else -> Unit
+            }
+        }
+    }
+}
+
+@Composable
+fun GameWinnerView(
+    isGameOver: Boolean,
+    winnerType: WinnerType,
+    winnerPlayer: Player?,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        AnimatedVisibility(
+            visible = isGameOver,
+            enter = fadeIn(tween(600)),
+            exit = fadeOut(tween(600)),
+        ) {
+            if (winnerPlayer == null) return@AnimatedVisibility
+            when (winnerType) {
+                WinnerType.HORIZONTAL1 -> WinHorizontalLine1(winnerPlayer.displayColor)
+                WinnerType.HORIZONTAL2 -> WinHorizontalLine2(winnerPlayer.displayColor)
+                WinnerType.HORIZONTAL3 -> WinHorizontalLine3(winnerPlayer.displayColor)
+                WinnerType.VERTICAL1 -> WinVerticalLine1(winnerPlayer.displayColor)
+                WinnerType.VERTICAL2 -> WinVerticalLine2(winnerPlayer.displayColor)
+                WinnerType.VERTICAL3 -> WinVerticalLine3(winnerPlayer.displayColor)
+                WinnerType.DIAGONAL1 -> WinDiagonalLine1(winnerPlayer.displayColor)
+                WinnerType.DIAGONAL2 -> WinDiagonalLine2(winnerPlayer.displayColor)
+                else -> Unit
+            }
+        }
     }
 }
 
@@ -219,25 +306,6 @@ fun CrossCell(
             start = Offset(x = 0f, y = this.size.height),
             end = Offset(x = this.size.width, y = 0f),
         )
-    }
-}
-
-@Composable
-fun DrawVictoryLine(
-    victoryPlayer: Player? = null,
-    victoryType: VictoryType = VictoryType.NONE
-) {
-    if (victoryPlayer == null) return
-    when (victoryType) {
-        VictoryType.HORIZONTAL1 -> WinHorizontalLine1(victoryPlayer.displayColor)
-        VictoryType.HORIZONTAL2 -> WinHorizontalLine2(victoryPlayer.displayColor)
-        VictoryType.HORIZONTAL3 -> WinHorizontalLine3(victoryPlayer.displayColor)
-        VictoryType.VERTICAL1 -> WinVerticalLine1(victoryPlayer.displayColor)
-        VictoryType.VERTICAL2 -> WinVerticalLine2(victoryPlayer.displayColor)
-        VictoryType.VERTICAL3 -> WinVerticalLine3(victoryPlayer.displayColor)
-        VictoryType.DIAGONAL1 -> WinDiagonalLine1(victoryPlayer.displayColor)
-        VictoryType.DIAGONAL2 -> WinDiagonalLine2(victoryPlayer.displayColor)
-        else -> Unit
     }
 }
 
@@ -410,9 +478,9 @@ fun WinDiagonalLine2(color: Color = ThemeColor.Red.color) {
 }
 
 @Composable
-fun GameAction(
+fun GameActionView(
     state: GameState,
-    action: () -> Unit
+    action: () -> Unit = {}
 ) {
     val animatedPaddingStart by animateDpAsState(
         targetValue = when (state) {

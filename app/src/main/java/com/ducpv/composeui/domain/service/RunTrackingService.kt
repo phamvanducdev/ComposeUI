@@ -30,7 +30,10 @@ import timber.log.Timber
  * Created by pvduc9773 on 09/05/2023.
  */
 enum class TrackingState {
-    NONE, RUNNING, PAUSED, STOPPED;
+    NONE,
+    RUNNING,
+    PAUSED,
+    STOPPED;
 
     val actionName: String
         get() = when (this) {
@@ -42,7 +45,10 @@ enum class TrackingState {
 }
 
 enum class NotificationActionType {
-    START, RESUME, PAUSE, STOP;
+    START,
+    RESUME,
+    PAUSE,
+    STOP;
 
     val actionName: String
         get() = when (this) {
@@ -62,10 +68,18 @@ enum class NotificationActionType {
 
     val actionIntent: String
         get() = when (this) {
-            START -> RunTrackingService.ACTION_START_OR_RESUME_SERVICE
-            RESUME -> RunTrackingService.ACTION_START_OR_RESUME_SERVICE
+            START -> RunTrackingService.ACTION_START_SERVICE
+            RESUME -> RunTrackingService.ACTION_RESUME_SERVICE
             PAUSE -> RunTrackingService.ACTION_PAUSE_SERVICE
             STOP -> RunTrackingService.ACTION_STOP_SERVICE
+        }
+
+    val actionRequestCode: Int
+        get() = when (this) {
+            START -> 0
+            RESUME -> 1
+            PAUSE -> 2
+            STOP -> 3
         }
 }
 
@@ -77,10 +91,11 @@ class RunTrackingService : LifecycleService() {
         val pathPoints = MutableStateFlow(mutableListOf<LatLng>())
         val runTime = MutableStateFlow(0L)
 
-        const val ACTION_START_OR_RESUME_SERVICE = "ACTION_START_OR_RESUME_SERVICE"
+        const val ACTION_REQUEST_CURRENT_LOCATION = "ACTION_REQUEST_CURRENT_LOCATION"
+        const val ACTION_START_SERVICE = "ACTION_START_SERVICE"
+        const val ACTION_RESUME_SERVICE = "ACTION_RESUME_SERVICE"
         const val ACTION_PAUSE_SERVICE = "ACTION_PAUSE_SERVICE"
         const val ACTION_STOP_SERVICE = "ACTION_STOP_SERVICE"
-        const val ACTION_REQUEST_CURRENT_LOCATION = "ACTION_REQUEST_CURRENT_LOCATION"
 
         const val NOTIFICATION_ID = 1
         const val NOTIFICATION_CHANNEL_ID = "running_tracker"
@@ -99,7 +114,15 @@ class RunTrackingService : LifecycleService() {
         fun onStartService(context: Context) {
             context.startService(
                 Intent(context, RunTrackingService::class.java).apply {
-                    action = ACTION_START_OR_RESUME_SERVICE
+                    action = ACTION_START_SERVICE
+                },
+            )
+        }
+
+        fun onResumeService(context: Context) {
+            context.startService(
+                Intent(context, RunTrackingService::class.java).apply {
+                    action = ACTION_RESUME_SERVICE
                 },
             )
         }
@@ -133,10 +156,21 @@ class RunTrackingService : LifecycleService() {
     lateinit var notificationBuilder: NotificationCompat.Builder
     lateinit var notificationManager: NotificationManager
 
-    private var timerJob: Job? = null
-    private var trackingJob: Job? = null
-    private var notificationJob: Job? = null
-    private var requestCurrentLocationJob: Job? = null
+    private var timerJob: Job = Job()
+    private var timerCoroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main + timerJob)
+
+    private var trackingJob: Job = Job()
+    private var trackingCoroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main + trackingJob)
+
+    private var notificationJob: Job = Job()
+    private var notificationCoroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main + notificationJob)
+
+    private var currentLocationJob = Job()
+    private var currentLocationCoroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main + currentLocationJob)
+
+    private var runTrackingServiceJob = Job()
+    private var runTrackingServiceCoroutineScope: CoroutineScope =
+        CoroutineScope(Dispatchers.Main + runTrackingServiceJob)
 
     private var isTimerRunning = false
     private var startTime = 0L
@@ -145,15 +179,26 @@ class RunTrackingService : LifecycleService() {
         override fun onLocationResult(p0: LocationResult) {
             super.onLocationResult(p0)
             for (location in p0.locations) {
+                currentLocation.value = LatLng(location.latitude, location.longitude)
                 if (trackingState.value == TrackingState.RUNNING) {
-                    val points = pathPoints.value.toMutableList().apply {
-                        add(LatLng(location.latitude, location.longitude))
-                    }
-                    pathPoints.value = points
+                    onAddTrackingPoint(LatLng(location.latitude, location.longitude))
                 }
             }
-            Timber.d("/// pathPoints: ${pathPoints.value}")
+            Timber.d("/// onLocationResult: pathPoints=${pathPoints.value}")
         }
+
+        override fun onLocationAvailability(p0: LocationAvailability) {
+            super.onLocationAvailability(p0)
+            Timber.d("/// onLocationAvailability: isLocationAvailable=${p0.isLocationAvailable}")
+        }
+    }
+
+    private fun onAddTrackingPoint(point: LatLng?) {
+        if (point == null) return
+        val points = pathPoints.value.toMutableList().apply {
+            add(point)
+        }
+        pathPoints.value = points
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -161,12 +206,11 @@ class RunTrackingService : LifecycleService() {
             ACTION_REQUEST_CURRENT_LOCATION -> {
                 requestCurrentLocation()
             }
-            ACTION_START_OR_RESUME_SERVICE -> {
-                if (trackingState.value == TrackingState.PAUSED) {
-                    resumeTracking()
-                } else {
-                    startTracking()
-                }
+            ACTION_START_SERVICE -> {
+                startTracking()
+            }
+            ACTION_RESUME_SERVICE -> {
+                resumeTracking()
             }
             ACTION_PAUSE_SERVICE -> {
                 pauseTracking()
@@ -181,14 +225,11 @@ class RunTrackingService : LifecycleService() {
     @SuppressLint("MissingPermission")
     private fun requestCurrentLocation() {
         if (PermissionUtility.hasPermissions(this, PermissionUtility.runTrackingPermissions)) {
-            requestCurrentLocationJob = SupervisorJob()
-            requestCurrentLocationJob?.let { requestCurrentLocationJob ->
-                CoroutineScope(Dispatchers.IO + requestCurrentLocationJob).launch {
-                    fusedLocationProviderClient.lastLocation.addOnSuccessListener { position ->
-                        Timber.d("/// fusedLocationProviderClient.addOnSuccessListener: $position")
-                        if (position != null) {
-                            currentLocation.value = LatLng(position.latitude, position.longitude)
-                        }
+            currentLocationCoroutineScope.launch {
+                fusedLocationProviderClient.lastLocation.addOnSuccessListener { position ->
+                    Timber.d("/// requestLastLocationResult: $position")
+                    if (position != null) {
+                        currentLocation.value = LatLng(position.latitude, position.longitude)
                     }
                 }
             }
@@ -199,44 +240,48 @@ class RunTrackingService : LifecycleService() {
         super.onCreate()
         notificationBuilder = baseNotificationBuilder
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        trackingJob = SupervisorJob()
-        trackingJob?.let { trackingJob ->
-            CoroutineScope(Dispatchers.IO + trackingJob).launch {
-                trackingState.collect {
-                    updateLocationTracking(it)
-                    updateNotificationTracking(it)
-                }
+        trackingCoroutineScope.launch {
+            trackingState.collect {
+                Timber.d("/// updateTrackingState: trackingState=${trackingState.value}")
+                updateLocationTracking(it)
+                updateNotificationTracking(it)
             }
         }
     }
 
     override fun onDestroy() {
-        stopTracking()
-        stopTimer()
+        Timber.d("/// onDestroy")
+        if (trackingState.value == TrackingState.RUNNING ||
+            trackingState.value == TrackingState.PAUSED
+        ) {
+            runTrackingServiceCoroutineScope.launch {
+                stopTracking()
+                stopTimer()
+            }
+        }
+        runTrackingServiceJob.cancel()
         super.onDestroy()
     }
 
     private fun onStopService() {
-        updateTrackingDatabase(
-            points = pathPoints.value,
-            runTime = runTime.value,
-            startTime = startTime,
-        )
-        stopTracking()
-        stopTimer()
-        stopForegroundService()
+        Timber.d("/// onStopService")
+        runTrackingServiceCoroutineScope.launch {
+            stopTracking()
+            stopTimer()
+            stopForegroundService()
+        }
     }
 
     private fun startTracking() {
-        trackingState.value = TrackingState.RUNNING
         pathPoints.value = mutableListOf()
+        trackingState.value = TrackingState.RUNNING
+        onAddTrackingPoint(currentLocation.value)
         startForegroundService()
         startTimer()
     }
 
     private fun resumeTracking() {
         trackingState.value = TrackingState.RUNNING
-        startForegroundService()
         resumeTimer()
     }
 
@@ -245,27 +290,31 @@ class RunTrackingService : LifecycleService() {
         pauseTimer()
     }
 
-    private fun stopTracking() {
+    private suspend fun stopTracking() {
+        Timber.d("/// stopTracking")
+        if (pathPoints.value.isNotEmpty()) {
+            updateTrackingDatabase(
+                points = pathPoints.value,
+                runTime = runTime.value,
+                startTime = startTime,
+            )
+        }
         trackingState.value = TrackingState.STOPPED
+        delay(1_000L) // Need delay time for removeLocationUpdates and clear notification
         pathPoints.value = mutableListOf()
-        trackingJob?.cancel()
-        trackingJob = null
-        requestCurrentLocationJob?.cancel()
-        requestCurrentLocationJob = null
+        trackingJob.cancel()
+        currentLocationJob.cancel()
     }
 
     private fun startTimer() {
         startTime = System.currentTimeMillis()
         isTimerRunning = true
-        timerJob = SupervisorJob()
-        timerJob?.let { timerJob ->
-            CoroutineScope(Dispatchers.IO + timerJob).launch {
-                while (true) {
-                    if (isTimerRunning) {
-                        runTime.value = runTime.value + 1000L
-                    }
-                    delay(1000L)
+        timerCoroutineScope.launch {
+            while (true) {
+                if (isTimerRunning) {
+                    runTime.value = runTime.value + 1000L
                 }
+                delay(1000L)
             }
         }
     }
@@ -279,10 +328,10 @@ class RunTrackingService : LifecycleService() {
     }
 
     private fun stopTimer() {
+        Timber.d("/// onStopTimer")
         isTimerRunning = false
         runTime.value = 0L
-        timerJob?.cancel()
-        timerJob = null
+        timerJob.cancel()
     }
 
     private fun startForegroundService() {
@@ -294,21 +343,17 @@ class RunTrackingService : LifecycleService() {
             ),
         )
         startForeground(NOTIFICATION_ID, notificationBuilder.build())
-        notificationJob = SupervisorJob()
-        notificationJob?.let { notificationJob ->
-            CoroutineScope(Dispatchers.IO + notificationJob).launch {
-                runTime.collect {
-                    val notification = notificationBuilder.setContentText(it.millisecondToTimeFormat())
-                    notificationManager.notify(NOTIFICATION_ID, notification.build())
-                }
+        notificationCoroutineScope.launch {
+            runTime.collect {
+                val notification = notificationBuilder.setContentText(it.millisecondToTimeFormat())
+                notificationManager.notify(NOTIFICATION_ID, notification.build())
             }
         }
     }
 
     private fun stopForegroundService() {
-        notificationJob?.cancel()
-        notificationJob = null
         notificationManager.cancel(NOTIFICATION_ID)
+        notificationJob.cancel()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -318,8 +363,8 @@ class RunTrackingService : LifecycleService() {
         runTime: Long,
         startTime: Long
     ) {
-        if (points.size > 10) return
         CoroutineScope(Dispatchers.IO).launch {
+            Timber.d("/// updateTrackingDatabase: points=${points.size}")
             val runTracker = RunTrackerEntity(
                 startTime = startTime,
                 endTime = System.currentTimeMillis(),
@@ -337,36 +382,51 @@ class RunTrackingService : LifecycleService() {
 
     @SuppressLint("MissingPermission")
     private fun updateLocationTracking(trackingState: TrackingState) {
-        if (trackingState == TrackingState.RUNNING) {
-            if (PermissionUtility.hasPermissions(this, PermissionUtility.runTrackingPermissions)) {
-                fusedLocationProviderClient.requestLocationUpdates(
-                    LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_UPDATE_INTERVAL).build(),
-                    requestLocationCallback,
-                    Looper.getMainLooper(),
-                )
+        when (trackingState) {
+            TrackingState.NONE -> Unit
+            TrackingState.RUNNING -> {
+                if (PermissionUtility.hasPermissions(this, PermissionUtility.runTrackingPermissions)) {
+                    Timber.d("/// requestLocationUpdates")
+                    fusedLocationProviderClient.requestLocationUpdates(
+                        LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_UPDATE_INTERVAL).build(),
+                        requestLocationCallback,
+                        Looper.getMainLooper(),
+                    )
+                }
             }
-        } else {
-            fusedLocationProviderClient.removeLocationUpdates(requestLocationCallback)
+            TrackingState.PAUSED,
+            TrackingState.STOPPED -> {
+                Timber.d("/// removeLocationUpdates")
+                fusedLocationProviderClient.removeLocationUpdates(requestLocationCallback)
+            }
         }
     }
 
     private fun updateNotificationTracking(trackingState: TrackingState) {
-        notificationBuilder.clearActions()
-        createNotificationTrackingActions(trackingState).forEach { action ->
-            notificationBuilder.addAction(
-                action.actionIcon,
-                action.actionName,
-                createNotificationTrackingActionPendingIntent(action),
-            )
+        when (trackingState) {
+            TrackingState.NONE -> Unit
+            TrackingState.STOPPED -> {
+                Timber.d("/// requestNotificationCancel")
+                notificationManager.cancel(NOTIFICATION_ID)
+            }
+            TrackingState.PAUSED,
+            TrackingState.RUNNING -> {
+                Timber.d("/// requestNotificationNotify")
+                notificationBuilder.clearActions()
+                createNotificationTrackingActions(trackingState).forEach { action ->
+                    notificationBuilder.addAction(
+                        action.actionIcon,
+                        action.actionName,
+                        createNotificationTrackingActionPendingIntent(action),
+                    )
+                }
+                notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
+            }
         }
-        notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
     }
 
     private fun createNotificationTrackingActions(trackingState: TrackingState): List<NotificationActionType> {
         return when (trackingState) {
-            TrackingState.NONE -> listOf(
-                NotificationActionType.START,
-            )
             TrackingState.RUNNING -> listOf(
                 NotificationActionType.PAUSE,
                 NotificationActionType.STOP,
@@ -384,7 +444,7 @@ class RunTrackingService : LifecycleService() {
     ): PendingIntent {
         return PendingIntent.getService(
             this,
-            0,
+            notificationActionType.actionRequestCode,
             Intent(this, RunTrackingService::class.java).apply {
                 action = notificationActionType.actionIntent
             },

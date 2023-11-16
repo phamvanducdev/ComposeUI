@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
@@ -28,6 +29,7 @@ import com.ducpv.composeui.shared.utility.millisecondToTimeFormat
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
@@ -102,6 +104,12 @@ fun RunTrackerScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        MapsInitializer.initialize(context, MapsInitializer.Renderer.LATEST) {
+            Timber.d("/// onMapsSdkInitializedCallback: $it")
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
@@ -145,10 +153,14 @@ fun RunTrackerScreen(
                     Button(onClick = {
                         when (trackingState.value) {
                             TrackingState.NONE,
-                            TrackingState.PAUSED,
                             TrackingState.STOPPED -> {
                                 RunTrackingService.onStartService(context)
                             }
+
+                            TrackingState.PAUSED -> {
+                                RunTrackingService.onResumeService(context)
+                            }
+
                             TrackingState.RUNNING -> {
                                 RunTrackingService.onPauseService(context)
                             }
@@ -167,14 +179,28 @@ fun RunTrackerScreen(
             }
         }
 
+        /**
+         * TODO issue crash app
+         * java.lang.NullPointerException: Attempt to get length of null array
+         * at java.nio.ByteBufferAsIntBuffer.put(ByteBufferAsIntBuffer.java:122)
+         * at com.google.maps.api.android.lib6.gmm6.vector.gl.buffer.n.i(:com.google.android.gms.dynamite_mapsdynamite@231613045@23.16.13 (190408-0):2)
+         * at com.google.maps.api.android.lib6.gmm6.vector.gl.buffer.n.d(:com.google.android.gms.dynamite_mapsdynamite@231613045@23.16.13 (190408-0):3)
+         * at com.google.maps.api.android.lib6.gmm6.vector.gl.drawable.d.s(:com.google.android.gms.dynamite_mapsdynamite@231613045@23.16.13 (190408-0):2)
+         * at com.google.maps.api.android.lib6.gmm6.vector.gl.drawable.ao.s(:com.google.android.gms.dynamite_mapsdynamite@231613045@23.16.13 (190408-0):12)
+         * at com.google.maps.api.android.lib6.gmm6.vector.bx.s(:com.google.android.gms.dynamite_mapsdynamite@231613045@23.16.13 (190408-0):29)
+         * at com.google.maps.api.android.lib6.gmm6.vector.bq.b(:com.google.android.gms.dynamite_mapsdynamite@231613045@23.16.13 (190408-0):151)
+         * at com.google.maps.api.android.lib6.gmm6.vector.at.run(:com.google.android.gms.dynamite_mapsdynamite@231613045@23.16.13 (190408-0):48)
+         */
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter),
         ) {
             if (runTrackerList.value.isNotEmpty()) {
+                val rowState = rememberLazyListState()
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
+                    state = rowState,
                     contentPadding = PaddingValues(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -230,12 +256,7 @@ fun ItemRunTracker(
     itemHeight: Dp,
     onItemClickListener: (RunTracker) -> Unit
 ) {
-    val points = remember {
-        runTracker.points.map { it.toLocation() }
-    }
-    val endPoint = remember {
-        points.lastOrNull() ?: LatLng(0.0, 0.0)
-    }
+    if (runTracker.points.isEmpty()) return
 
     val mapProperties by remember {
         mutableStateOf(MapProperties(mapType = MapType.NORMAL))
@@ -252,7 +273,10 @@ fun ItemRunTracker(
     }
 
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(endPoint, GoogleMapUtility.zoomSizeDefault * 1.2f)
+        position = CameraPosition.fromLatLngZoom(
+            runTracker.points.map { it.toLocation() }.lastOrNull() ?: LatLng(0.0, 0.0),
+            GoogleMapUtility.zoomSizeDefault * 1.2f,
+        )
     }
 
     Card(
@@ -273,7 +297,7 @@ fun ItemRunTracker(
             cameraPositionState = cameraPositionState,
         ) {
             Polyline(
-                points = points,
+                points = runTracker.points.map { it.toLocation() },
                 color = ThemeColor.Red.color,
                 clickable = true,
                 width = 8f,
