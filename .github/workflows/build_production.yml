@@ -85,11 +85,6 @@ jobs:
           tag_prefix: v
           release_branches: master
 
-      - name: Set tag name to environment
-        run: echo "TAG_NAME=${{ inputs.tag }}" >> $GITHUB_ENV
-        with:
-          tag: ${{ steps.tagging.outputs.new_tag }}
-
   build-and-deploy-production-app:
     name: Build & Deploy Production App
     needs: [ setup, ktLint, unitTest, tagging ]
