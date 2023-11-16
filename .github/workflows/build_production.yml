@@ -53,9 +53,47 @@ jobs:
       - name: Run unit test
         run: ./gradlew testProductionDebugUnitTest
 
+  tagging:
+    name: Tagging
+    runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.tag_version.outputs.new_tag }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set version name to github env
+        run: |
+          echo "version_name=$(${{github.workspace}}/gradlew -q printVersionName)" >> $GITHUB_ENV
+      - name: Get latest tag
+        id: latestTag
+        uses: oprypin/find-latest-tag@v1.1.0
+        with:
+          repository: phamvanducdev/ComposeUI
+      - name: Set version code to github env
+        run: |
+          LATEST_TAG_NAME=${{ steps.latestTag.outputs.tag }}
+          CURRENT_VERSION_CODE=`echo ${LATEST_TAG_NAME} | sed -e "s/v.*\-//"`
+          INCREMENTED_VERSION_CODE=`expr $CURRENT_VERSION_CODE + 1`
+
+          echo "version_code=${INCREMENTED_VERSION_CODE}" >> $GITHUB_ENV
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          custom_tag: ${{ env.version_name }}-${{ env.version_code }}
+          tag_prefix: v
+          release_branches: master
+
+      - name: Set tag name to environment
+        run: echo "TAG_NAME=${{ inputs.tag }}" >> $GITHUB_ENV
+        with:
+          tag: ${{ steps.tagging.outputs.new_tag }}
+
   build-and-deploy-production-app:
     name: Build & Deploy Production App
     needs: [ setup, ktLint, unitTest ]
+    with:
+      tag: ${{ needs.tagging.outputs.new_tag }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -64,31 +102,7 @@ jobs:
       - uses: gradle/gradle-build-action@v2
         with:
           cache-read-only: true
-      #
-      #      - name: Generate Production Release App
-      #        run: ./gradlew assembleProductionRelease
-      #
-      #      - id: sign_app
-      #        name: Sign App APK
-      #        uses: r0adkll/sign-android-release@v1
-      #        with:
-      #          releaseDirectory: app/build/outputs/apk/production/release
-      #          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-      #          alias: ${{ secrets.KEY_ALIAS }}
-      #          keyStorePassword: ${{ secrets.STORE_PASSWORD }}
-      #          keyPassword: ${{ secrets.KEY_PASSWORD }}
-      #
-      #      - name: Upload APK on Build Artifacts
-      #        uses: wzieba/Firebase-Distribution-Github-Action@v1
-      #        with:
-      #          appId: ${{ secrets.FIREBASE_PRODUCTION_APP_ID }}
-      #          serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIALS }}
-      #          file: app/build/outputs/apk/production/release/app-production-release.apk
-      #          releaseNotes: ${{ github.event.pull_request.title }}
-      #          groups: appTester
 
-      - name: Set tag name to environment
-        run: echo "TAG_NAME=${{ inputs.tag }}" >> $GITHUB_ENV
       - name: Sign android app bundle
         id: bundle
         env:
