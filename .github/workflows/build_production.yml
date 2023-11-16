@@ -94,8 +94,6 @@ jobs:
     name: Build & Deploy Production App
     needs: [ setup, ktLint, unitTest, tagging ]
     runs-on: ubuntu-latest
-    with:
-      tag: ${{ needs.tagging.outputs.new_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
