@@ -55,7 +55,7 @@ jobs:
 
   build-and-deploy-production-app:
     name: Build & Deploy Production App
-    needs: [ setup, ktLint, unitTest, tagging ]
+    needs: [ setup, ktLint, unitTest ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
