@@ -55,6 +55,7 @@ jobs:
 
   tagging:
     name: Tagging
+    needs: [ setup, ktLint, unitTest ]
     runs-on: ubuntu-latest
     outputs:
       new_tag: ${{ steps.tag_version.outputs.new_tag }}
@@ -92,9 +93,9 @@ jobs:
   build-and-deploy-production-app:
     name: Build & Deploy Production App
     needs: [ setup, ktLint, unitTest ]
+    runs-on: ubuntu-latest
     with:
       tag: ${{ needs.tagging.outputs.new_tag }}
-    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
