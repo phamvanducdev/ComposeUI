@@ -1,8 +1,12 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.serialization'
+    id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
     id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
     id 'dagger.hilt.android.plugin'
+    id 'kotlinx-serialization'
     id 'kotlin-kapt'
 }
 
@@ -49,11 +53,13 @@ android {
             dimension "environment"
             applicationIdSuffix '.dev'
             buildConfigField("String", "API_URL", "\"${envProperties.getProperty("API_URL_DEV")}\"")
+            buildConfigField("String", "STORAGE_BUCKET", "\"${envProperties.getProperty("STORAGE_BUCKET_DEV")}\"")
             resValue "string", "app_name", "ComposeUi[Dev]"
         }
         production {
             dimension "environment"
             buildConfigField("String", "API_URL", "\"${envProperties.getProperty("API_URL_PRODUCTION")}\"")
+            buildConfigField("String", "STORAGE_BUCKET", "\"${envProperties.getProperty("STORAGE_BUCKET_PRODUCTION")}\"")
             resValue "string", "app_name", "ComposeUi"
         }
     }
@@ -68,8 +74,8 @@ android {
         compose true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion composeCompilerVersion
-        kotlinCompilerVersion kotlinVersion
+        kotlinCompilerVersion '1.8.22'
+        kotlinCompilerExtensionVersion '1.4.8'
     }
     packagingOptions {
         resources {
@@ -82,25 +88,33 @@ dependencies {
     implementation coreKtx
     implementation appCompat
     implementation composeUi
+    implementation composeRuntimeLivedata
+    implementation composeActivity
     implementation composeMaterial
     implementation composeMaterialIcon
     implementation composePreview
-    implementation composeActivity
-    implementation composeCoil
+    implementation composeNavigation
     implementation composeNavigationAnimation
+    implementation composeSystemUiController
+    implementation composeNavigationMaterial
     implementation composePermissions
+    implementation composeCoil
 
-    implementation composeRuntimeLivedata
-    implementation androidLifecycleRuntimeKtx
+    implementation pagingRuntime
+    implementation composePaging
+
+    implementation androidLifecycleRuntimeCompose
     implementation androidLifecycleService
 
     implementation daggaerHilt
-    kapt daggaerHiltCompiler
     implementation daggaerHiltNavigationCompose
+    kapt daggaerHiltCompiler
 
     implementation platform(firebaseBom)
-    // implementation firebaseAnalyticsKtx
+    implementation firebaseCrashlyticsKtx
     implementation firebaseFirestoreKtx
+    implementation firebaseStorageKtx
+    implementation firebaseAuthKtx
 
     implementation mapsCompose
     implementation playServicesMaps
@@ -110,6 +124,16 @@ dependencies {
     implementation roomRuntime
     kapt roomCompiler
 
+    implementation retrofit
+    implementation retofitSerializationConverter
+    implementation okHttp3
+    implementation okHttp3LoggingInterceptor
+
+    implementation datastoreCore
+    implementation datastorePreferences
+    implementation kotlinxSerializationJson
+
+    implementation kotlinxDatetime
     implementation splashScreen
     implementation timber
     implementation gson

@@ -13,14 +13,12 @@ import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import com.ducpv.composeui.R
-import com.ducpv.composeui.domain.database.dao.RunTrackerDao
-import com.ducpv.composeui.domain.database.entity.PointEntity
-import com.ducpv.composeui.domain.database.entity.RunTrackerEntity
+import com.ducpv.composeui.domain.usecase.runtracker.InsertRunTrackerUseCase
 import com.ducpv.composeui.shared.utility.PermissionUtility
-import com.ducpv.composeui.shared.utility.millisecondToTimeFormat
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -145,7 +143,7 @@ class RunTrackingService : LifecycleService() {
     }
 
     @Inject
-    lateinit var runTrackerDao: RunTrackerDao
+    lateinit var insertRunTrackerUseCase: InsertRunTrackerUseCase
 
     @Inject
     lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -238,6 +236,7 @@ class RunTrackingService : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
+        Timber.d("/// onCreate")
         notificationBuilder = baseNotificationBuilder
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         trackingCoroutineScope.launch {
@@ -294,9 +293,9 @@ class RunTrackingService : LifecycleService() {
         Timber.d("/// stopTracking")
         if (pathPoints.value.isNotEmpty()) {
             updateTrackingDatabase(
-                points = pathPoints.value,
-                runTime = runTime.value,
                 startTime = startTime,
+                runTime = runTime.value,
+                points = pathPoints.value,
             )
         }
         trackingState.value = TrackingState.STOPPED
@@ -345,7 +344,7 @@ class RunTrackingService : LifecycleService() {
         startForeground(NOTIFICATION_ID, notificationBuilder.build())
         notificationCoroutineScope.launch {
             runTime.collect {
-                val notification = notificationBuilder.setContentText(it.millisecondToTimeFormat())
+                val notification = notificationBuilder.setContentText(it.millisecondToRunTimeFormat())
                 notificationManager.notify(NOTIFICATION_ID, notification.build())
             }
         }
@@ -359,24 +358,17 @@ class RunTrackingService : LifecycleService() {
     }
 
     private fun updateTrackingDatabase(
-        points: List<LatLng>,
+        startTime: Long,
         runTime: Long,
-        startTime: Long
+        points: List<LatLng>
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             Timber.d("/// updateTrackingDatabase: points=${points.size}")
-            val runTracker = RunTrackerEntity(
+            insertRunTrackerUseCase(
                 startTime = startTime,
-                endTime = System.currentTimeMillis(),
                 runTime = runTime,
-                points = points.map {
-                    PointEntity(
-                        latitude = it.latitude,
-                        longitude = it.longitude,
-                    )
-                },
+                points = points,
             )
-            runTrackerDao.insertRunTracker(runTracker)
         }
     }
 
@@ -451,4 +443,14 @@ class RunTrackingService : LifecycleService() {
             FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE,
         )
     }
+}
+
+fun Long.millisecondToRunTimeFormat(): String { // "00:00:00"
+    var milliseconds = this
+    val hours = TimeUnit.MILLISECONDS.toHours(milliseconds)
+    milliseconds -= TimeUnit.HOURS.toMillis(hours)
+    val minutes = TimeUnit.MILLISECONDS.toMinutes(milliseconds)
+    milliseconds -= TimeUnit.MINUTES.toMillis(minutes)
+    val seconds = TimeUnit.MILLISECONDS.toSeconds(milliseconds)
+    return "${String.format("%02d", hours)}:${String.format("%02d", minutes)}:${String.format("%02d", seconds)}"
 }

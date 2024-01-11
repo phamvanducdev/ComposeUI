@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Created by pvduc9773 on 12/05/2023.
  */
-
 @Dao
 interface RunTrackerDao {
     @Query(value = "SELECT * FROM run_tracker")

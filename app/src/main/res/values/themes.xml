@@ -4,6 +4,7 @@
     <style name="AppTheme" parent="android:Theme.Material.Light.NoActionBar" />
 
     <style name="AppTheme.SplashScreen" parent="Theme.SplashScreen">
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="windowSplashScreenBackground">@android:color/white</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_source_code</item>
         <item name="windowSplashScreenAnimationDuration">1000</item>

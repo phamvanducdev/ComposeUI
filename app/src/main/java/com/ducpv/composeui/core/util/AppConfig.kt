@@ -6,5 +6,4 @@ package com.ducpv.composeui.core.util
 data class AppConfig(
     val versionCode: Int,
     val versionName: String,
-    // val apiEndpoint: String,
 )

@@ -96,5 +96,5 @@ enum class WinnerType {
     DIAGONAL1,
     DIAGONAL2,
     DRAW,
-    NONE
+    NONE,
 }
